@@ -36,7 +36,7 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   print "Open image file", fileName
   imp = IJ.openImage(os.path.join(currentDir, fileName))
    
-  # Put your processing commands here!
+  # Put your processing commands here
    
   # Saving the image
   saveDir = currentDir.replace(srcDir, dstDir) if keepDirectories else dstDir
