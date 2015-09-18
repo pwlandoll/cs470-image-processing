@@ -51,7 +51,7 @@ class Example:
 		# Create the menu frame with size of 600x300
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(600, 300)
-		self.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+		self.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
 
 		# Add a panel to the frame
 		pnl = JPanel()
