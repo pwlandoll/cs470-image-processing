@@ -22,6 +22,7 @@ class Example:
 
 		# Allow for selection of files or directories
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES)
+		chooseFile.setMultiSelectionEnabled(True)
 
 		# Filter results
 		filter = FileNameExtensionFilter("Image Files", ["jpg", "gif"])
@@ -29,14 +30,19 @@ class Example:
 		
 		# Show the chooser
 		ret = chooseFile.showDialog(self.textfield, "Choose file")
-		if chooseFile.getSelectedFile() is not None:
-			self.textfield.text = chooseFile.getSelectedFile().getPath()
+		if chooseFile.getSelectedFiles() is not None:
+			if len(chooseFile.getSelectedFiles()) != 1:
+				self.textfield.text = "Multiple Files"
+			else:
+				self.textfield.text = chooseFile.getSelectedFile().getPath()
 			if ret == JFileChooser.APPROVE_OPTION:
 				# Open the file using bio formats plugin
-				self.file = chooseFile.getSelectedFile().getPath()
-				imps = BF.openImagePlus(self.file)
-				for imp in imps:
-					imp.show()
+				self.file = chooseFile.getSelectedFiles()
+				for x in range(0, len(self.file)):
+					tempFile = self.file[x].getPath()
+					imps = BF.openImagePlus(tempFile)
+					for imp in imps:
+						imp.show()
 
 	def onExit(self, event):
 		System.exit(0)
