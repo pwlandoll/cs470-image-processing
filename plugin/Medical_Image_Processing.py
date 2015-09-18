@@ -1,11 +1,14 @@
-#from ij import IJ
-import urllib2
+from ij import IJ
+import os
 
 def readURLList(filename):
 	f, images = open(filename, 'r'), []
 	for line in f:
-		images.append(urllib2.urlopen(line))
+		images.append(IJ.openImage(line))
 	f.close()
 	return images
 
-urls = readURLList("samplelist.txt")
+filename = "C:\Users\Peter\Documents\GitHub\cs470-image-processing\plugin\samplelist.txt"
+
+for image in readURLList(filename):
+	image.show()

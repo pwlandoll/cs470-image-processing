@@ -10,7 +10,7 @@ def run():
   if not dstDir:
     return
   gd = GenericDialog("Process Folder")
-  gd.addStringField("File_extension", ".tif")
+  gd.addStringField("File_extension", ".jpg")
   gd.addStringField("File_name_contains", "")
   gd.addCheckbox("Keep directory structure when saving", True)
   gd.showDialog()
