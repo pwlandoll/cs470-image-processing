@@ -10,6 +10,8 @@ from javax.swing import JPopupMenu
 from java.lang import System
 from javax.swing.filechooser import FileNameExtensionFilter
 from loci.plugins import BF
+from ij import IJ
+import os
 
 class ImageProcessorMenu:
 
@@ -79,7 +81,7 @@ class ImageProcessorMenu:
 		pnl.add(outputButton)
 
 		# Add a start button to the frame
-		self.startButton = JButton('Start', actionPerformed=self.optionMenuPopup)
+		self.startButton = JButton('Start', actionPerformed=self.start)
 		self.startButton.setEnabled(False)
 		pnl.add(self.startButton)
 
@@ -115,8 +117,22 @@ class ImageProcessorMenu:
 
 
 	def selectURLFile(self, event):
-		print "need to do something here"
+		# Creates a file chooser object
+		chooseFile = JFileChooser()
 
+		# Allow for selection of directories
+		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+		# Show the chooser
+		ret = chooseFile.showDialog(self.inputTextfield, "Choose url file")
+		if chooseFile.getSelectedFiles() is not None:
+
+			# Save the selection to attributed associated with input or output
+			if ret == JFileChooser.APPROVE_OPTION:
+				self.urlLocation = chooseFile.getSelectedFile().getPath()
+				self.inputTextfield.setText(chooseFile.getSelectedFile().getPath())
+				self.shouldEnableStart()
+				self.inputDirectory = None
+				
 	# Sets the input directory
 	def setInputDirectory(self, event):
 		self.setDirectory("Input")
@@ -143,16 +159,38 @@ class ImageProcessorMenu:
 				if inputOrOutput == "Input":
 					self.inputDirectory = chooseFile.getSelectedFile()
 					self.inputTextfield.setText(chooseFile.getSelectedFile().getPath())
+					self.urlLocation = None
 				else:
 					self.outputDirectory = chooseFile.getSelectedFile() 
 					self.outputTextfield.setText(chooseFile.getSelectedFile().getPath())
-					
-				# Enable the start button if both an input and output have been selected
-				try:
-					if self.inputDirectory is not None and self.outputDirectory is not None:
-						self.startButton.setEnabled(True)
-				except AttributeError:
-					print "Needed to put something here"					
+				self.shouldEnableStart()
+				
+	def shouldEnableStart(self):
+		# Enable the start button if both an input and output have been selected
+		try:
+			if self.inputDirectory is not None or self.urlLocation is not None and self.outputDirectory is not None:
+				self.startButton.setEnabled(True)
+		except AttributeError:
+			print "Needed to put something here"
+			
+	# Downloads the images from the url file
+	def start(self, event):
+		try:
+			if self.urlLocation is not None:
+				self.downloadFiles(self.urlLocation)
+		except AttributeError:
+			print "Need to add other functionality"
+			
+	def downloadFiles(self, filename):
+		for image in self.readURLList(filename):
+			IJ.save(image, self.outputDirectory.getPath() + "\\" + image.getTitle())
+		
+	def readURLList(self, filename):
+		f, images = open(filename, 'r'), []
+		for line in f:
+			images.append(IJ.openImage(line))
+		f.close()
+		return images
 
 if __name__ == '__main__':
 	#start things off.
