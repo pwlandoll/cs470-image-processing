@@ -37,6 +37,44 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   imp = IJ.openImage(os.path.join(currentDir, fileName))
    
   # Put your processing commands here
+  # Added code to output width, height, title, stack size, etc.. 
+  #Follow this example if needed
+  #from ij import IJ
+  #imp = IJ.getImage()
+  width = imp.getWidth()
+  height = imp.getHeight()
+  print ""
+  print "title:", imp.getTitle()
+  print "width:", width
+  print "height:", height
+  print "stack size:", imp.getStackSize()
+
+  #return bit depth
+  bitDepth = imp.getBitDepth()
+  type = "RGB"
+  if bitDepth!=24:
+   type = str(bitDepth)+"-bit"
+    print "type:", type
+
+  #return if composite or hyperstack
+  composite = imp.isComposite()
+  hyperstack = imp.isHyperStack()
+  print "composite:", composite
+  print "hyperstack:", hyperstack
+  if composite or hyperstack:
+     print "channels:", imp.getNChannels()
+    print "slices:", imp.getNSlices()
+    print "frames:", imp.getNFrames()
+
+  #returns calibration
+  cal = imp.getCalibration()
+  scaled = cal.scaled();
+  print "scaled:", scaled
+  if scaled:
+    units = cal.units
+    print "pixel width:", cal.pixelWidth
+    print "pixel height:", cal.pixelHeight
+    print "pixel depth:", cal.pixelDepth
    
   # Saving the image
   saveDir = currentDir.replace(srcDir, dstDir) if keepDirectories else dstDir
