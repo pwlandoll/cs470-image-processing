@@ -11,6 +11,13 @@ from java.lang import System
 from javax.swing.filechooser import FileNameExtensionFilter
 from loci.plugins import BF
 from ij import IJ
+from ij.macro import MacroRunner
+from java.io  import File
+from java.io import BufferedReader
+from java.io import FileReader
+from java.io import IOException
+from java.io import FileWriter
+from java.io import BufferedWriter
 import os
 
 class ImageProcessorMenu:
@@ -180,6 +187,7 @@ class ImageProcessorMenu:
 				self.downloadFiles(self.urlLocation)
 		except AttributeError:
 			print "Need to add other functionality"
+		self.runMacro()
 			
 	def downloadFiles(self, filename):
 		for image in self.readURLList(filename):
@@ -192,6 +200,38 @@ class ImageProcessorMenu:
 		f.close()
 		return images
 
+	def runMacro(self):
+		macroFile = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\Macro.ijm")
+		folder = self.inputDirectory
+		print "got input directory"
+		listOfPictures = folder.listFiles()
+		print "got list of files"
+		for file in listOfPictures:
+			fileName = file.getName()
+			#if fileName.indexOf(".") > 0:
+			#	fileName = fileName.substring(0, fileName.indexOf("."))
+			outputDir = File(self.outputDirectory.getPath() + "\\" + fileName)
+			outputDir.mkdir()
+			try:
+				fileContents = ""
+				string = ""
+				br = BufferedReader(FileReader(macroFile))
+				string = br.readLine()
+				while string is not None:
+					fileContents = fileContents + string
+					print string
+					string = br.readLine()
+				fileContents.replace("FILENAME", file.getName())
+				fileContents.replace("FILEPATH", outputDir.getPath())
+				fileContents.replace("IMAGENAME", file.getName())
+				newMacro = File(outputDir.getPath() + "\\Macro.ijm")
+				writer = BufferedWriter(FileWriter(newMacro))
+				writer.write(fileContents)
+				print fileContents
+			except IOException:
+				print "something here"
+			#runner = MacroRunner(newMacro)
+		
 if __name__ == '__main__':
 	#start things off.
 	ImageProcessorMenu()
