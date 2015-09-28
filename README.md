@@ -11,6 +11,8 @@ The goal of the software is to perform post-processing and statistical analysis 
 2. R
 	* Required for statistical analysis
 	* To download, click [here](https://cran.r-project.org/mirrors.html) and select a mirror site.
-3. rpy2
+3. PypeR
 	* Required for running R commands
-	* Install using `pip install rpy2`
+	* NOTE: Windows requires R to be added to the PATH; `C:\Program Files\R\R-3.2.2\bin\x64` for 64-bit systems, `C:\Program Files\R\R-3.2.2\bin\i386` for 32-bit.
+	* Install using `pip install pyper`
+	* Project website [here](http://www.webarray.org/softwares/PypeR/)
