@@ -9,8 +9,9 @@ def run():
   dstDir = IJ.getDirectory("Output_directory")
   if not dstDir:
     return
+
   gd = GenericDialog("Process Folder")
-  gd.addStringField("File_extension", ".jpg")
+  gd.addStringField("File_extension", "")
   gd.addStringField("File_name_contains", "")
   gd.addCheckbox("Keep directory structure when saving", True)
   gd.showDialog()
@@ -28,19 +29,23 @@ def run():
       if containString not in filename:
         continue
       process(srcDir, dstDir, root, filename, keepDirectories)
- 
+
+     
 def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   print "Processing:"
    
   # Opening the image
   print "Open image file", fileName
   imp = IJ.openImage(os.path.join(currentDir, fileName))
+  #opens the image. removed imp.close() so image opens
+  imp.show()
    
   # Put your processing commands here
   # Added code to output width, height, title, stack size, etc.. 
   #Follow this example if needed
   #from ij import IJ
   #imp = IJ.getImage()
+  
   width = imp.getWidth()
   height = imp.getHeight()
   print ""
@@ -54,7 +59,7 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   type = "RGB"
   if bitDepth!=24:
    type = str(bitDepth)+"-bit"
-    print "type:", type
+   print "type:", type
 
   #return if composite or hyperstack
   composite = imp.isComposite()
@@ -62,7 +67,7 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   print "composite:", composite
   print "hyperstack:", hyperstack
   if composite or hyperstack:
-     print "channels:", imp.getNChannels()
+    print "channels:", imp.getNChannels()
     print "slices:", imp.getNSlices()
     print "frames:", imp.getNFrames()
 
@@ -81,7 +86,12 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   if not os.path.exists(saveDir):
     os.makedirs(saveDir)
   print "Saving to", saveDir
-  IJ.saveAs(imp, "Tiff", os.path.join(saveDir, fileName));
-  imp.close()
+  IJ.saveAs(imp, ".jpg", os.path.join(saveDir, fileName+"_processed"));
+
+
  
 run()
+
+
+
+
