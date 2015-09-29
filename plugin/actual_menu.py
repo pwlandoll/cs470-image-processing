@@ -18,8 +18,10 @@ from java.io import FileReader
 from java.io import IOException
 from java.io import FileWriter
 from java.io import BufferedWriter
+from threading import Lock
+from ij import WindowManager
 import os
-
+import re
 class ImageProcessorMenu:
 
 	# Opens an open dialog box for the user to select a file
@@ -98,11 +100,54 @@ class ImageProcessorMenu:
 		fileExit = JMenuItem("Exit", None, actionPerformed=self.onExit)
 		fileExit.setToolTipText("Exit application")
 		file.add(fileExit)
+		createGeneralMacro = JMenuItem("Create Generalized Macro File", None, actionPerformed=self.generalize)
+		createGeneralMacro.setToolTipText("Create a macro file that can be used in the processing pipeline using an existings macro file")
+		file.add(createGeneralMacro)
 		menubar.add(file)
 		self.frame.setJMenuBar(menubar)
 
 		# Show the frame, done last to show all components
 		self.frame.setVisible(True)
+
+	# Takes a specific macro file and generalizes it to be used in the processing pipeline
+	# Needs to create a menu that will allow user to pick the file instead of a static one
+	def generalize(self, event):
+		macroFile = File("C:\\Users\\Matthew\\Documents\\School\\College\\Fall 2015\\cs470\\unmodified_macro.ijm")
+		file = "test.jpg"
+		fileName = file
+		if fileName.find(".") > 0:
+			fileName = fileName[0: fileName.find(".")]
+		outputDir = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\outputs")
+		outputDir.mkdir()
+		try:
+			fileContents = ""
+			string = ""
+			br = BufferedReader(FileReader(macroFile))
+			string = br.readLine()
+			while string is not None:
+				fileContents = fileContents + string
+				string = br.readLine()
+			fileContents = fileContents.replace(file, "IMAGENAME")
+			fileContents = re.sub("open=\[[^\]]*\]", "open=[INPUTPATH]", fileContents)
+		
+			pathString = ""
+			if fileContents.find("save=[") != -1:
+				pathString = fileContents[fileContents.find("save=[") + 6:fileContents.find("]",fileContents.find("save=["))]
+				pathString = pathString[0:pathString.rfind("\\")]
+			elif fileContents.find("saveAs(\"Results\",") != -1:
+				pathString = fileContents[fileContents.find("saveAs(\"Results\",") + 19:fileContents.find("]",fileContents.find(")",fileContents.find("saveAs(\"Results\",")))]
+				pathString = pathString[0:pathString.rfind("\\")]
+			if pathString != None:
+				fileContents = fileContents.replace(pathString, "FILEPATH")
+			
+			fileContents = fileContents.replace("\\","\\\\")
+		
+			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
+			writer = BufferedWriter(FileWriter(newMacro))
+			writer.write(fileContents)
+			writer.close()
+		except IOException:
+			print "IO exception"
 
 	# Creates a menu popup for the select input directory button, select input directory or url csv file
 	def optionMenuPopup(self, event):
@@ -200,16 +245,16 @@ class ImageProcessorMenu:
 		f.close()
 		return images
 
+
 	def runMacro(self):
 		macroFile = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\Macro.ijm")
 		folder = self.inputDirectory
-		print "got input directory"
 		listOfPictures = folder.listFiles()
-		print "got list of files"
+		lock = Lock()
 		for file in listOfPictures:
 			fileName = file.getName()
-			#if fileName.indexOf(".") > 0:
-			#	fileName = fileName.substring(0, fileName.indexOf("."))
+			if fileName.index(".") > 0:
+				fileName = fileName[0: fileName.index(".")]
 			outputDir = File(self.outputDirectory.getPath() + "\\" + fileName)
 			outputDir.mkdir()
 			try:
@@ -219,18 +264,20 @@ class ImageProcessorMenu:
 				string = br.readLine()
 				while string is not None:
 					fileContents = fileContents + string
-					print string
 					string = br.readLine()
-				fileContents.replace("FILENAME", file.getName())
-				fileContents.replace("FILEPATH", outputDir.getPath())
-				fileContents.replace("IMAGENAME", file.getName())
+				fileContents = fileContents.replace("INPUTPATH", file.getPath())
+				fileContents = fileContents.replace("FILEPATH\\", outputDir.getPath())
+				fileContents = fileContents.replace("IMAGENAME", file.getName())
+				fileContents = fileContents.replace("\\","\\\\")
 				newMacro = File(outputDir.getPath() + "\\Macro.ijm")
 				writer = BufferedWriter(FileWriter(newMacro))
 				writer.write(fileContents)
-				print fileContents
+				writer.close()
 			except IOException:
-				print "something here"
-			#runner = MacroRunner(newMacro)
+				print "IOException"
+			lock.acquire()
+			runner = MacroRunner(newMacro)
+			lock.release()
 		
 if __name__ == '__main__':
 	#start things off.
