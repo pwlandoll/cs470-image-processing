@@ -217,7 +217,7 @@ class ImageProcessorMenu:
 				else:
 					self.outputDirectory = chooseFile.getSelectedFile() 
 					self.outputTextfield.setText(chooseFile.getSelectedFile().getPath())
-				self.shouldEnableStart()
+					self.shouldEnableStart()
 				
 	def shouldEnableStart(self):
 		# Enable the start button if both an input and output have been selected
