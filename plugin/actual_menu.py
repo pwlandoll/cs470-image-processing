@@ -18,8 +18,10 @@ from java.io import FileReader
 from java.io import IOException
 from java.io import FileWriter
 from java.io import BufferedWriter
+from java.lang import Thread
 from threading import Lock
 from ij import WindowManager
+from time import sleep
 import os
 import re
 class ImageProcessorMenu:
@@ -112,39 +114,24 @@ class ImageProcessorMenu:
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# Needs to create a menu that will allow user to pick the file instead of a static one
 	def generalize(self, event):
-		
-		# File location, will make this into a file browser to pick file
 		macroFile = File("C:\\Users\\Matthew\\Documents\\School\\College\\Fall 2015\\cs470\\unmodified_macro.ijm")
-		
-		# Name of the file used to create the macro file, will change to prompt to ask user
 		file = "test.jpg"
-		
-		# Name of the file without the file extension
 		fileName = file
 		if fileName.find(".") > 0:
 			fileName = fileName[0: fileName.find(".")]
-		
-		# Directory to create the general macro in
-		outputDir = self.outputDirectory
-		
+		outputDir = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\outputs")
+		outputDir.mkdir()
 		try:
 			fileContents = ""
 			string = ""
-			
-			# Read in the original macro file
 			br = BufferedReader(FileReader(macroFile))
 			string = br.readLine()
 			while string is not None:
 				fileContents = fileContents + string
 				string = br.readLine()
-			
-			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
-			
-			# Replace the open directory path with INPUTPATH
 			fileContents = re.sub("open=\[[^\]]*\]", "open=[INPUTPATH]", fileContents)
-			
-			# Find the output directory used in the macro file
+		
 			pathString = ""
 			if fileContents.find("save=[") != -1:
 				pathString = fileContents[fileContents.find("save=[") + 6:fileContents.find("]",fileContents.find("save=["))]
@@ -152,15 +139,11 @@ class ImageProcessorMenu:
 			elif fileContents.find("saveAs(\"Results\",") != -1:
 				pathString = fileContents[fileContents.find("saveAs(\"Results\",") + 19:fileContents.find("]",fileContents.find(")",fileContents.find("saveAs(\"Results\",")))]
 				pathString = pathString[0:pathString.rfind("\\")]
-				
-			# Replace the output directory with FILEPATH
 			if pathString != None:
 				fileContents = fileContents.replace(pathString, "FILEPATH")
 			
-			# Replace all \s with \\ as the macro file requires double \\
 			fileContents = fileContents.replace("\\","\\\\")
 		
-			# Write the generalized macro file to a file named general_macro.ijm in the output directory
 			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
 			writer = BufferedWriter(FileWriter(newMacro))
 			writer.write(fileContents)
@@ -294,10 +277,8 @@ class ImageProcessorMenu:
 				writer.close()
 			except IOException:
 				print "IOException"
-			lock.acquire()
-			runner = MacroRunner(newMacro)
-			lock.release()
-		
+			IJ.runMacro(fileContents)
+			
 if __name__ == '__main__':
 	#start things off.
 	ImageProcessorMenu()
