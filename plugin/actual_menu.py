@@ -114,36 +114,58 @@ class ImageProcessorMenu:
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# Needs to create a menu that will allow user to pick the file instead of a static one
 	def generalize(self, event):
+
+		# File location, will make this into a file browser to pick file
 		macroFile = File("C:\\Users\\Matthew\\Documents\\School\\College\\Fall 2015\\cs470\\unmodified_macro.ijm")
+
+		# Name of the file used to create the macro file, will change to prompt to ask user
 		file = "test.jpg"
+		
+		# Name of the file without the file extension
 		fileName = file
 		if fileName.find(".") > 0:
 			fileName = fileName[0: fileName.find(".")]
+		
+		# Directory to create the general macro in
 		outputDir = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\outputs")
 		outputDir.mkdir()
+		
 		try:
 			fileContents = ""
 			string = ""
+
+			# Read in the original macro file
 			br = BufferedReader(FileReader(macroFile))
 			string = br.readLine()
 			while string is not None:
 				fileContents = fileContents + string
 				string = br.readLine()
+				
+			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
+
+			# Replace the open directory path with INPUTPATH
 			fileContents = re.sub("open=\[[^\]]*\]", "open=[INPUTPATH]", fileContents)
-		
+
+			# Find the output directory used in the macro file and replace all instances of it with FILEPATH
 			pathString = ""
+
+			# Finds the file path from the bio-exporter function
 			if fileContents.find("save=[") != -1:
 				pathString = fileContents[fileContents.find("save=[") + 6:fileContents.find("]",fileContents.find("save=["))]
 				pathString = pathString[0:pathString.rfind("\\")]
+				
+			# Finds the file path from the results save function
 			elif fileContents.find("saveAs(\"Results\",") != -1:
 				pathString = fileContents[fileContents.find("saveAs(\"Results\",") + 19:fileContents.find("]",fileContents.find(")",fileContents.find("saveAs(\"Results\",")))]
 				pathString = pathString[0:pathString.rfind("\\")]
 			if pathString != None:
 				fileContents = fileContents.replace(pathString, "FILEPATH")
-			
+
+			# Replace all \s with \\ as macro files require two
 			fileContents = fileContents.replace("\\","\\\\")
-		
+
+			# Create the general macro file and write the generalized text to it
 			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
 			writer = BufferedWriter(FileWriter(newMacro))
 			writer.write(fileContents)
@@ -185,7 +207,6 @@ class ImageProcessorMenu:
 				self.urlLocation = chooseFile.getSelectedFile().getPath()
 				self.inputTextfield.setText(chooseFile.getSelectedFile().getPath())
 				self.shouldEnableStart()
-				self.inputDirectory = None
 				
 	# Sets the input directory
 	def setInputDirectory(self, event):
@@ -217,7 +238,7 @@ class ImageProcessorMenu:
 				else:
 					self.outputDirectory = chooseFile.getSelectedFile() 
 					self.outputTextfield.setText(chooseFile.getSelectedFile().getPath())
-				self.shouldEnableStart()
+					self.shouldEnableStart()
 				
 	def shouldEnableStart(self):
 		# Enable the start button if both an input and output have been selected
@@ -253,33 +274,46 @@ class ImageProcessorMenu:
 		r("dataFilename <- '%s'" % dataFilename)
 		r("source('processing.R')")
 
+	# Runs the macro file for each image in the input directory
 	def runMacro(self):
+
+		# Location of the generalized macro function, this will be a prompt where the user selects the file
 		macroFile = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\Macro.ijm")
-		folder = self.inputDirectory
-		listOfPictures = folder.listFiles()
-		lock = Lock()
+
+		# Gets an array of all the images in the input directory
+		listOfPictures = self.inputDirectory.listFiles()
+
+		# For each image in the array, create a specific macro for it and run that macro
 		for file in listOfPictures:
+
+			# The name of the image
 			fileName = file.getName()
+
+			# The name of the image without a file extension
 			if fileName.index(".") > 0:
 				fileName = fileName[0: fileName.index(".")]
+
+			# Create a folder with the name of the image in the output folder to house any outputs of the macro
 			outputDir = File(self.outputDirectory.getPath() + "\\" + fileName)
 			outputDir.mkdir()
+
+			
 			try:
 				fileContents = ""
 				string = ""
+				
+				# Read in the general macro
 				br = BufferedReader(FileReader(macroFile))
 				string = br.readLine()
 				while string is not None:
 					fileContents = fileContents + string
 					string = br.readLine()
+					
+				# Replace all the generalized strings with specifics
 				fileContents = fileContents.replace("INPUTPATH", file.getPath())
 				fileContents = fileContents.replace("FILEPATH\\", outputDir.getPath())
 				fileContents = fileContents.replace("IMAGENAME", file.getName())
 				fileContents = fileContents.replace("\\","\\\\")
-				newMacro = File(outputDir.getPath() + "\\Macro.ijm")
-				writer = BufferedWriter(FileWriter(newMacro))
-				writer.write(fileContents)
-				writer.close()
 			except IOException:
 				print "IOException"
 			IJ.runMacro(fileContents)
