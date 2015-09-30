@@ -1,4 +1,5 @@
 from ij import IJ
+from pyper import *
 import os
 
 def readURLList(filename):
@@ -12,3 +13,9 @@ filename = "C:\Users\Peter\Documents\GitHub\cs470-image-processing\plugin\sample
 
 for image in readURLList(filename):
 	image.show()
+
+def runRScript():
+	r = R()
+	output = r('a <- 5; print(a)')
+	return output
+
