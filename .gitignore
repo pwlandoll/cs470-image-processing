@@ -14,3 +14,5 @@ hs_err_pid*
 # Compiled Python Files
 *.pyc
 
+# Ignore R stuff
+*.R*

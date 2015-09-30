@@ -22,6 +22,7 @@ from java.lang import Thread
 from threading import Lock
 from ij import WindowManager
 from time import sleep
+from pyper import *
 import os
 import re
 class ImageProcessorMenu:
