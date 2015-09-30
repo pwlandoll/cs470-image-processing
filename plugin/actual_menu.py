@@ -247,6 +247,11 @@ class ImageProcessorMenu:
 		f.close()
 		return images
 
+	def runRScript(self, dataFilename):
+		r = R()
+		#r("setwd('./plugin')")
+		r("dataFilename <- '%s'" % dataFilename)
+		r("source('processing.R')")
 
 	def runMacro(self):
 		macroFile = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\Macro.ijm")
