@@ -22,13 +22,16 @@ def run():
   keepDirectories = gd.getNextBoolean()
   for root, directories, filenames in os.walk(srcDir):
     for filename in filenames:
+    	#hidden file
+       if filename.endswith(".db"):
+         continue
       # Check for file extension
-      if not filename.endswith(ext):
-        continue
+      #if not filename.endswith(ext):
+        #continue
       # Check for file name pattern
-      if containString not in filename:
-        continue
-      process(srcDir, dstDir, root, filename, keepDirectories)
+     # if containString not in filename:
+        #continue
+       process(srcDir, dstDir, root, filename, keepDirectories)
 
      
 def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
@@ -45,6 +48,8 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
   #Follow this example if needed
   #from ij import IJ
   #imp = IJ.getImage()
+  #statistics
+  #print imp.getStatistics()
   
   width = imp.getWidth()
   height = imp.getHeight()
@@ -87,11 +92,5 @@ def process(srcDir, dstDir, currentDir, fileName, keepDirectories):
     os.makedirs(saveDir)
   print "Saving to", saveDir
   IJ.saveAs(imp, ".jpg", os.path.join(saveDir, fileName+"_processed"));
-
-
  
 run()
-
-
-
-
