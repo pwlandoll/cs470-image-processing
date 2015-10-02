@@ -11,7 +11,10 @@ The goal of the software is to perform post-processing and statistical analysis 
 2. R
 	* Required for statistical analysis
 	* To download, click [here](https://cran.r-project.org/mirrors.html) and select a mirror site.
-3. PypeR
+3. Python
+	* The plugin will work on Python 2 and 3
+	* Python can be downloaded [here](https://www.python.org/downloads/)
+4. PypeR
 	* Required for running R commands
 	* NOTE: Windows requires R to be added to the PATH; `C:\Program Files\R\R-X.X.X\bin\x64` for 64-bit systems, `C:\Program Files\R\R-X.X.X\bin\i386` for 32-bit.
 	* Install using `pip install pyper` from the command line
