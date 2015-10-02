@@ -14,6 +14,12 @@ The goal of the software is to perform post-processing and statistical analysis 
 3. PypeR
 	* Required for running R commands
 	* NOTE: Windows requires R to be added to the PATH; `C:\Program Files\R\R-X.X.X\bin\x64` for 64-bit systems, `C:\Program Files\R\R-X.X.X\bin\i386` for 32-bit.
-	* Install using `pip install pyper`
+	* Install using `pip install pyper` from the command line
 	* Project website [here](http://www.webarray.org/softwares/PypeR/)
 	* Some instructions [here](http://www.jstatsoft.org/article/view/v035c02/v35c02.pdf)
+
+## Installation Instructions
+1. **Get the Code:** Either clone the repository, or download the plugin folder.
+2. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install...`, and select `actual_menu.py`.
+	* Optional: Create a folder for the plugin
+3. Copy `processing.R` into the folder where you installed `actual_menu`.

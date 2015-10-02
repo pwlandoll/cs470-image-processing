@@ -262,6 +262,7 @@ class ImageProcessorMenu:
 		for image in self.readURLList(filename):
 			IJ.save(image, self.outputDirectory.getPath() + "\\" + image.getTitle())
 		
+	# returns an array of ImageJ image objects
 	def readURLList(self, filename):
 		f, images = open(filename, 'r'), []
 		for line in f:
@@ -269,9 +270,9 @@ class ImageProcessorMenu:
 		f.close()
 		return images
 
+	# It would help if dataFilename were an absolute path
 	def runRScript(self, dataFilename):
 		r = R()
-		#r("setwd('./plugin')")
 		r("dataFilename <- '%s'" % dataFilename)
 		r("source('processing.R')")
 
