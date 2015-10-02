@@ -25,6 +25,7 @@ from time import sleep
 from pyper import *
 import os
 import re
+
 class ImageProcessorMenu:
 
 	# Opens an open dialog box for the user to select a file
