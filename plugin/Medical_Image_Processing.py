@@ -260,9 +260,9 @@ class ImageProcessorMenu:
 
 	# It would help if dataFilename were an absolute path
 	def runRScript(self, dataFilename):
+		# Instead of running an R script, we'll be running R commands from here
 		r = R()
-		r("dataFilename <- '%s'" % dataFilename)
-		r("source('processing.R')")
+		r("imageData = read.csv('%s')" % dataFilename)
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
