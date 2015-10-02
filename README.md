@@ -20,6 +20,5 @@ The goal of the software is to perform post-processing and statistical analysis 
 
 ## Installation Instructions
 1. **Get the Code:** Either clone the repository, or download the plugin folder.
-2. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install...`, and select `actual_menu.py`.
+2. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install...`, and select `Medical_Image_Processing.py`.
 	* Optional: Create a folder for the plugin
-3. Copy `processing.R` into the folder where you installed `actual_menu`.
