@@ -146,13 +146,11 @@ class ImageProcessorMenu:
 			fileContents = fileContents.replace(file, "IMAGENAME")
 
 			fileContents = fileContents.replace(file, "IMAGENAME")
-			fileContents = re.sub("open=\[[^\]]*\]", "open=[INPUTPATH]", fileContents)
-			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=INPUTPATH", fileContents)
+			#fileContents = re.sub("open=\[[^\]]*\]", "open=[INPUTPATH]", fileContents)
+			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
 			fileContents = re.sub(r"save=.*\\",r"save=FILEPATH\\", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
-
-			# Replace all \s with \\ as macro files require two
-			#fileContents = fileContents.replace("\\","\\\\")
 
 			# Create the general macro file and write the generalized text to it
 			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
@@ -302,7 +300,6 @@ class ImageProcessorMenu:
 				fileContents = fileContents.replace("FILEPATH", outputDir.getPath())
 				fileContents = fileContents.replace("IMAGENAME", file.getName())
 				fileContents = fileContents.replace("\\","\\\\")
-				print fileContents
 			except IOException:
 				print "IOException"
 			IJ.runMacro(fileContents)
