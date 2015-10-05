@@ -302,7 +302,7 @@ class ImageProcessorMenu:
 				fileName = fileName[0: fileName.index(".")]
 
 			# Create a folder with the name of the image in the output folder to house any outputs of the macro
-			outputDir = File(self.outputDirectory.getPath() + "\\" + fileName)
+			outputDir = File(self.outputDirectory.getPath() + "/" + fileName)
 			outputDir.mkdir()
 
 			
