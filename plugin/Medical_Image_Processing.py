@@ -22,6 +22,7 @@ from java.io import BufferedWriter
 from java.lang import Thread
 from threading import Lock
 from ij import WindowManager
+from ij import Menus
 from pyper import *
 import os
 import re
@@ -285,7 +286,7 @@ class ImageProcessorMenu:
 	def runMacro(self):
 
 		# Location of the generalized macro function, this will be a prompt where the user selects the file
-		macroFile = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\Macro.ijm")
+		macroFile = File(Menus.getPlugInsPath() + "Macro.ijm")
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
