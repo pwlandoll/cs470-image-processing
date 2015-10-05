@@ -169,7 +169,7 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r"save=.*\\",r"save=FILEPATH\\", fileContents)
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
+			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", "saveAs(\"Text\", \"FILEPATH\\\w", fileContents)
 
 			# Create the general macro file and write the generalized text to it
 			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
