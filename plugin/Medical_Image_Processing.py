@@ -22,10 +22,10 @@ from java.io import BufferedWriter
 from java.lang import Thread
 from threading import Lock
 from ij import WindowManager
-from time import sleep
 from pyper import *
 import os
 import re
+
 class ImageProcessorMenu:
 
 	# Opens an open dialog box for the user to select a file
@@ -112,7 +112,7 @@ class ImageProcessorMenu:
 
 		# Show the frame, done last to show all components
 		self.frame.setVisible(True)
-
+		
 	def generalizePrompts(self, event):
 		# Creates a file chooser object
 		chooseFile = JFileChooser()
@@ -133,11 +133,10 @@ class ImageProcessorMenu:
     			if result != None:
     				self.generalize(chooseFile.getSelectedFile(), result)
 
-
-		
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# Needs to create a menu that will allow user to pick the file instead of a static one
-	def generalize(self, macroFile, imageName):
+	def generalize(self, macroFile, imageName):
+
 		# Name of the file used to create the macro file, will change to prompt to ask user
 		file = imageName
 		
@@ -172,14 +171,10 @@ class ImageProcessorMenu:
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
 
 			# Create the general macro file and write the generalized text to it
-			fileChooser = JFileChooser()
-			fileChooser.setDialogTitle("Specify a file to save")
-			userSelection = fileChooser.showSaveDialog(self.frame)
-			if userSelection == JFileChooser.APPROVE_OPTION:
-				newMacro = fileChooser.getSelectedFile()
-				writer = BufferedWriter(FileWriter(newMacro))
-				writer.write(fileContents)
-				writer.close()
+			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
+			writer = BufferedWriter(FileWriter(newMacro))
+			writer.write(fileContents)
+			writer.close()
 		except IOException:
 			print "IO exception"
 
