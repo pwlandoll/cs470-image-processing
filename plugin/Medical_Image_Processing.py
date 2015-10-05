@@ -7,6 +7,7 @@ from javax.swing import JMenu
 from javax.swing import JMenuBar
 from javax.swing import JMenuItem
 from javax.swing import JPopupMenu
+from javax.swing import JOptionPane
 from java.lang import System
 from javax.swing.filechooser import FileNameExtensionFilter
 from loci.plugins import BF
@@ -103,7 +104,7 @@ class ImageProcessorMenu:
 		fileExit = JMenuItem("Exit", None, actionPerformed=self.onExit)
 		fileExit.setToolTipText("Exit application")
 		file.add(fileExit)
-		createGeneralMacro = JMenuItem("Create Generalized Macro File", None, actionPerformed=self.generalize)
+		createGeneralMacro = JMenuItem("Create Generalized Macro File", None, actionPerformed=self.generalizePrompts)
 		createGeneralMacro.setToolTipText("Create a macro file that can be used in the processing pipeline using an existings macro file")
 		file.add(createGeneralMacro)
 		menubar.add(file)
@@ -112,15 +113,33 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setVisible(True)
 
+	def generalizePrompts(self, event):
+		# Creates a file chooser object
+		chooseFile = JFileChooser()
+
+		# Allow for selection of files or directories
+		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+
+		# Filter results
+		filter = FileNameExtensionFilter("Macro File", ["ijm"])
+		chooseFile.addChoosableFileFilter(filter)
+		
+		# Show the chooser
+		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
+		if chooseFile.getSelectedFile() is not None:
+			if ret == JFileChooser.APPROVE_OPTION:
+				frame = JFrame();
+    			result = JOptionPane.showInputDialog(frame, "Enter image name used to create macro (including extension):");
+    			if result != None:
+    				self.generalize(chooseFile.getSelectedFile(), result)
+
+
+		
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# Needs to create a menu that will allow user to pick the file instead of a static one
-	def generalize(self, event):
-
-		# File location, will make this into a file browser to pick file
-		macroFile = File("C:\\Users\\Matthew\\Documents\\School\\College\\Fall 2015\\cs470\\unmodified_macro.ijm")
-
+	def generalize(self, macroFile, imageName):
 		# Name of the file used to create the macro file, will change to prompt to ask user
-		file = "test.jpg"
+		file = imageName
 		
 		# Name of the file without the file extension
 		fileName = file
@@ -153,10 +172,14 @@ class ImageProcessorMenu:
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
 
 			# Create the general macro file and write the generalized text to it
-			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
-			writer = BufferedWriter(FileWriter(newMacro))
-			writer.write(fileContents)
-			writer.close()
+			fileChooser = JFileChooser()
+			fileChooser.setDialogTitle("Specify a file to save")
+			userSelection = fileChooser.showSaveDialog(self.frame)
+			if userSelection == JFileChooser.APPROVE_OPTION:
+				newMacro = fileChooser.getSelectedFile()
+				writer = BufferedWriter(FileWriter(newMacro))
+				writer.write(fileContents)
+				writer.close()
 		except IOException:
 			print "IO exception"
 
