@@ -164,10 +164,10 @@ class ImageProcessorMenu:
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
 			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
-			fileContents = re.sub(r"save=.*\\",r"save=FILEPATH\\", fileContents)
+			fileContents = re.sub(r"save=[^\s\"]*\\",r"save=FILEPATH\\", fileContents)
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", "saveAs(\"Text\", \"FILEPATH\\\w", fileContents)
+			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\', fileContents)
 
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
@@ -319,6 +319,8 @@ class ImageProcessorMenu:
 				fileContents = fileContents.replace("FILEPATH", outputDir.getPath())
 				fileContents = fileContents.replace("IMAGENAME", file.getName())
 				fileContents = fileContents.replace("\\","\\\\")
+				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
+
 			except IOException:
 				print "IOException"
 			IJ.runMacro(fileContents)
