@@ -163,20 +163,19 @@ class ImageProcessorMenu:
 				
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
-
-			fileContents = fileContents.replace(file, "IMAGENAME")
-			#fileContents = re.sub("open=\[[^\]]*\]", "open=[INPUTPATH]", fileContents)
 			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
 			fileContents = re.sub(r"save=.*\\",r"save=FILEPATH\\", fileContents)
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", "saveAs(\"Results\", \"FILEPATH\\\w", fileContents)
 			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", "saveAs(\"Text\", \"FILEPATH\\\w", fileContents)
 
-			# Create the general macro file and write the generalized text to it
-			newMacro = File(outputDir.getPath() + "\\general_macro.ijm")
-			writer = BufferedWriter(FileWriter(newMacro))
-			writer.write(fileContents)
-			writer.close()
+			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
+			fileChooser = JFileChooser();
+			if fileChooser.showOpenDialog(self.frame) == JFileChooser.APPROVE_OPTION:
+				newMacro = fileChooser.getSelectedFile()
+				writer = BufferedWriter(FileWriter(newMacro))
+				writer.write(fileContents)
+				writer.close()
 		except IOException:
 			print "IO exception"
 
