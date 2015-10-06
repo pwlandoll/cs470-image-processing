@@ -14,7 +14,7 @@ The goal of the software is to perform post-processing and statistical analysis 
 		* To download, click [here](https://cran.r-project.org/mirrors.html) and select a mirror site.
 		* NOTE: Windows requires R to be added to the PATH; `C:\Program Files\R\R-X.X.X\bin\x64` for 64-bit systems, `C:\Program Files\R\R-X.X.X\bin\i386` for 32-bit.
 2. **Get the Code:** Either clone the repository, or download the plugin folder.
-3. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install...`, and select `Medical_Image_Processing.py`. Do the same for `pyper.py`. Place both in the default plugins directory.
+3. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install PlugIn...`, and select `Medical_Image_Processing.py`. Do the same for `pyper.py`. 
 
 ## Other Notes
 ### PypeR
