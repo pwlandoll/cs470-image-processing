@@ -1,8 +1,1 @@
-open("FILEPATH");
-run("FFT");
-run("Bio-Formats Exporter", "save=[FILEPATH\\IMAGENAME]");
-close();
-run("Measure");
-saveAs("Results", "FILEPATH\\RESULTS.csv");
-selectWindow("389266.jpg");
-close();
+run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");run("Measure");run("Median...", "radius=2");run("Bio-Formats Exporter", "save=[FILEPATH\MEAN_NOEXTENSION.tif] write_each_z_section export compression=Uncompressed");run("FFT");run("Bio-Formats Exporter", "save=[FILEPATH\FFT_MEAN_NOEXTENSION.tif] export compression=Uncompressed");run("Measure");selectWindow("IMAGENAME");run("Measure");saveAs("Results", "FILEPATH\Results.csv");close();selectWindow("FFT of IMAGENAME");close();
