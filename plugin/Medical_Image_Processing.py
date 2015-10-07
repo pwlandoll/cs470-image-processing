@@ -166,8 +166,11 @@ class ImageProcessorMenu:
 			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
 			fileContents = re.sub(r"save=[^\s\"]*\\",r"save=FILEPATH\\", fileContents)
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
+			
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\', fileContents)
 			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\', fileContents)
+			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\1NOEXTENSION\2]", fileContents)
 
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
@@ -318,9 +321,9 @@ class ImageProcessorMenu:
 				fileContents = fileContents.replace("INPUTPATH", file.getPath())
 				fileContents = fileContents.replace("FILEPATH", outputDir.getPath())
 				fileContents = fileContents.replace("IMAGENAME", file.getName())
+				fileContents = fileContents.replace("NOEXTENSION", fileName)
 				fileContents = fileContents.replace("\\","\\\\")
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
-
 			except IOException:
 				print "IOException"
 			IJ.runMacro(fileContents)
