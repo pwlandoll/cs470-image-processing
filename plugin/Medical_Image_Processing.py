@@ -1,48 +1,40 @@
-from javax.swing import JFrame
-from javax.swing import JCheckBox
-from javax.swing import JLabel
-from javax.swing import JComboBox
-from javax.swing import JPanel
-from javax.swing import JTextField
-from javax.swing import JButton
-from javax.swing import JFileChooser
-from javax.swing import JMenu
-from javax.swing import JMenuBar
-from javax.swing import JMenuItem
-from javax.swing import JPopupMenu
-from javax.swing import JOptionPane
-from java.lang import System
-from javax.swing.filechooser import FileNameExtensionFilter
-from loci.plugins import BF
-from ij import IJ
-from ij.macro import MacroRunner
-from java.io  import File
-from java.io import BufferedReader
-from java.io import FileReader
-from java.io import IOException
-from java.io import FileWriter
-from java.io import BufferedWriter
-from java.lang import Thread
-from threading import Lock
-from ij import WindowManager
-from ij import Menus
-from pyper import *
 import os
 import re
+
+from ij import IJ
+from ij import Menus
+from ij import WindowManager
 from ij.gui import GenericDialog
+from ij.macro import MacroRunner
+
 from java.awt import Color
-from javax.swing import BorderFactory
-from javax.swing.border import Border
-from java.awt.event import ActionListener
 from java.awt import Dimension
-from javax.swing import JSeparator
-from javax.swing import SwingConstants
-from javax.swing import BoxLayout
+from java.awt.event import ActionListener
+
+from java.io import BufferedReader
+from java.io import BufferedWriter
+from java.io import File
+from java.io import FileReader
+from java.io import FileWriter
+from java.io import IOException
+
+from java.lang import System
+from java.lang import Thread
+
+from javax.swing import *
+from javax.swing.border import Border
+from javax.swing.filechooser import FileNameExtensionFilter
+
+from loci.plugins import BF
+from pyper import *
+from threading import Lock
+
 
 #Wraps a method call to allow static methods to be called from ImageProcessorMenu
 class CallableWrapper:
 	def __init__(self, any):
 		self.__call__ = any
+
 
 #ActionListener for DelimiterComboBox
 class DelimiterActionListener(ActionListener):
@@ -52,12 +44,11 @@ class DelimiterActionListener(ActionListener):
 		#Enable/Disable extension textfield based on selected delimiter
 		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
 
+
 class ImageProcessorMenu:
-	
 	# Opens an open dialog box for the user to select a file
 	# Once selected, the file path is added to the textbox
 	def browseForFile(self,event):
-
 		# Creates a file chooser object
 		chooseFile = JFileChooser()
 
@@ -258,7 +249,6 @@ class ImageProcessorMenu:
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# Needs to create a menu that will allow user to pick the file instead of a static one
 	def generalize(self, macroFile, imageName):
-
 		# Name of the file used to create the macro file, will change to prompt to ask user
 		file = imageName
 		
@@ -422,7 +412,6 @@ class ImageProcessorMenu:
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
-
 		#Accepted file types
 		self.validFileExtensions = [".png", ".jpg", ".gif", ".txt", ".tif", ".ini"]
 
