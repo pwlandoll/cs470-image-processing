@@ -21,7 +21,23 @@ from java.io import IOException
 from java.lang import System
 from java.lang import Thread
 
-from javax.swing import *
+from javax.swing import BorderFactory
+from javax.swing import BoxLayout
+from javax.swing import JFrame
+from javax.swing import JCheckBox
+from javax.swing import JLabel
+from javax.swing import JComboBox
+from javax.swing import JPanel
+from javax.swing import JTextField
+from javax.swing import JButton
+from javax.swing import JFileChooser
+from javax.swing import JMenu
+from javax.swing import JMenuBar
+from javax.swing import JMenuItem
+from javax.swing import JPopupMenu
+from javax.swing import JOptionPane
+from javax.swing import JSeparator
+from javax.swing import SwingConstants
 from javax.swing.border import Border
 from javax.swing.filechooser import FileNameExtensionFilter
 
