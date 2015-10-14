@@ -420,11 +420,15 @@ class ImageProcessorMenu:
 		f.close()
 		return images
 
-	# It would help if dataFilename were an absolute path
-	def runRScript(self, dataFilename):
-		# Instead of running an R script, we'll be running R commands from here
-		r = R()
+	def runRScript(self, dataFilename, scriptFilename):
+		# R() can be given a path to the R executable if necessary
+		# e.g. R("C:/Program Files/R/R-3.2.2/bin")
+		if self.rcmd:
+			r = R(RCMD="%s" % self.rcmd)
+		else:
+			r = R()
 		r("imageData = read.csv('%s')" % dataFilename)
+		r("source('%s')" % scriptFilename)
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
