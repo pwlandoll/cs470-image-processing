@@ -26,6 +26,7 @@ from java.lang import Thread
 from threading import Lock
 from ij import WindowManager
 from ij import Menus
+from ij.macro import MacroRunner
 from pyper import *
 import os
 import re
@@ -38,6 +39,9 @@ from java.awt import Dimension
 from javax.swing import JSeparator
 from javax.swing import SwingConstants
 from javax.swing import BoxLayout
+from ij.macro import Interpreter
+from ij import ImagePlus
+from java.lang import Runnable
 
 #Wraps a method call to allow static methods to be called from ImageProcessorMenu
 class CallableWrapper:
@@ -289,6 +293,8 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\', fileContents)
 			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\', fileContents)
+			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\1NOEXTENSION\2]", fileContents)
 
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
@@ -445,10 +451,11 @@ class ImageProcessorMenu:
 		self.containString = self.containsTextfield.getText()
 
 		# Location of the generalized macro function, this will be a prompt where the user selects the file
-		macroFile = File(self.macroDirectory.getPath())
+		self.macroFile = File(self.macroDirectory.getPath())
+		
 
 		#Validation routine to ensure selected macro file is actually a macro file (file extension = '.ijm')
-  		if not (validateUserInput(self, self.macroSelectTextfield.getName(), [macroFile.getName()[-4:]], [".ijm"])):
+  		if not (validateUserInput(self, self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
   			return
 
 		# Gets an array of all the images in the input directory
@@ -456,41 +463,60 @@ class ImageProcessorMenu:
 
 		#Returns images as specified by the user and adds them to a list
 		listOfPicturesBasedOnUserSpecs = getImagesBasedOnUserFileSpecications(self, listOfPictures)
-		
-		# For each image in the array, create a specific macro for it and run that macro
-		for file in listOfPicturesBasedOnUserSpecs:
-			
-			# The name of the image
-			fileName = file.getName()
-				
-			# The name of the image without a file extension
-			#if fileName.index(".") > 0:
-			#	fileName = fileName[0: fileName.index(".")]
+		self.pictures = listOfPicturesBasedOnUserSpecs
+		self.index = 0
+		self.process()
 
+	# Gets the next image to process and creates a specific macro for that file
+	# Creates an instance of macroRunner to run the macro on a seperate thread
+	def process(self):
+		# Checks that there is another image to process
+		if self.index < len(self.pictures):
+
+			# Image to process
+			file = self.pictures[self.index]
+			
+			# Increase the index indicating which file to be processed next
+			self.index = self.index + 1
+			
+			# The name of the image without a file extension
+			fileName = file.getName()
+			if fileName.index(".") > 0:
+				fileName = fileName[0: fileName.index(".")]
+		
 			# Create a folder with the name of the image in the output folder to house any outputs of the macro
 			outputDir = File(self.outputDirectory.getPath() + "/" + fileName)
 			outputDir.mkdir()
 
-			
+			# Create the specific macro by reading in the general macro file and modify it with regular expressions
+			# INPUTPATH: Replaced with the path to the file to be processed (path includes the file with extension)
+			# FILEPATH: Replaced with the path where any outputs from the macro will be saved
+			# IMAGENAME: Replaced with the name of the file with file extension
 			try:
 				fileContents = ""
 				string = ""
 				# Read in the general macro
-				br = BufferedReader(FileReader(macroFile))
+				br = BufferedReader(FileReader(self.macroFile))
 				string = br.readLine()
 				while string is not None:
 					fileContents = fileContents + string
 					string = br.readLine()
-					# Replace all the generalized strings with specifics
+				# Replace all the generalized strings with specifics
 				fileContents = fileContents.replace("INPUTPATH", file.getPath())
 				fileContents = fileContents.replace("FILEPATH", outputDir.getPath())
 				fileContents = fileContents.replace("IMAGENAME", file.getName())
+				fileContents = fileContents.replace("NOEXTENSION", fileName)
+				fileContents = fileContents.replace('run("View Step")','waitForUser("Press ok to continue")')
 				fileContents = fileContents.replace("\\","\\\\")
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
 			except IOException:
 				print "IOException"
-			IJ.runMacro(fileContents)
-
+			runner = macroRunner()
+			runner.setMacro(fileContents)
+			runner.setReference(self)
+			thread = Thread(runner)
+			thread.start()
+					
 			#Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				copyOriginalImageToNewDirectory(self, fileName, outputDir)
@@ -547,7 +573,37 @@ def getImagesBasedOnUserFileSpecications(self, images):
 			imagesToReturn.append(file)
 
 	return imagesToReturn
-			
+
+#############################################################
+# Extends the class runnable to run on a seperate thread
+# Recieves a macro file from the ImageProcessorMenu instance
+# 	and runs the macro. After the macro is executed, it calls
+#	the process method of the ImageProcessorMenu instance to
+#	create a macro for the next file.
+# Cannot get a new constuctor to work otherwise the set 
+# 	methods would just be part of the constructor
+#############################################################
+class macroRunner(Runnable):
+
+	# Overides the run method of the Runnable class
+	# Creates an instance of Interpreter to run the macro
+	# Runs the macro in the instance and calls process on 
+	#	the ImageProcessorMenu instance
+	def run(self):
+		inter = Interpreter()
+		inter.run(self.macroString)
+		self.ref.process()
+
+	# Sets the macro file
+	# string, the macro file to be run
+	def setMacro(self, string):
+		self.macroString = string
+
+	# Sets the ImageProcessMenu instance that is processing images
+	# ref, the ImageProcessMenu instance
+	def setReference(self, ref):
+		self.ref = ref
+
 if __name__ == '__main__':
 	#start things off.
 	ImageProcessorMenu()
