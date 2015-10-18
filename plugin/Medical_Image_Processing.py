@@ -1,6 +1,8 @@
 import os
 import re
 
+from os.path import join
+
 from ij import IJ
 from ij import Menus
 from ij import WindowManager
@@ -600,15 +602,63 @@ def getImagesBasedOnUserFileSpecications(self, images):
 
 	return imagesToReturn
 
-#############################################################
-# Extends the class runnable to run on a seperate thread
-# Recieves a macro file from the ImageProcessorMenu instance
-# 	and runs the macro. After the macro is executed, it calls
-#	the process method of the ImageProcessorMenu instance to
-#	create a macro for the next file.
-# Cannot get a new constuctor to work otherwise the set 
-# 	methods would just be part of the constructor
-#############################################################
+	# Searches for the R.exe file on the users system to give pyper the path to it
+	# Creates a file chooser to allow the user to specificy in which directory
+	#	and thus sub directories to look for it in. Allows the seach to happen
+	# 	faster if the user knows where to look, or lets user with no knowledge 
+	# 	of file systems find the file by specifiying the root of the drive
+	# Saves the path in the Medical_Image_Processing.txt file in the 
+	# 	Medical_Image folder found in the fiji plugins directory
+	def rSearch(self):
+		# File to search for
+		lookfor = 'R.exe'
+
+		# Create a file chooser to pick which directory to recrursively search in
+		chooser = JFileChooser()
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
+		if chooser.showDialog(None, "Select") ==  JFileChooser.APPROVE_OPTION:
+
+			# Recursively search all directories starting in the path choosen by the user
+			for root, dirs, files in os.walk(chooser.getSelectedFile().getPath()):
+
+				# If the file is in one of the directories, store the path and break
+				if lookfor in files:
+					found = join(root, lookfor)
+					try:
+						# Path to the Medical_Image directory
+						pluginDir = IJ.getDir("plugins") + "\Medical_Image"
+
+						# Create the file to house the path
+						file = File(pluginDir + "\Medical_Image_Processing.txt")
+						writer = BufferedWriter(FileWriter(file))
+
+						# Create the contents of the file
+						# rPath: Path to R.exe on the users system
+						# inputPath: Last used input directory path
+						# outputPath: Last used output directory path 
+						# macroPath: Last used macro file path
+						# rScriptPath: Last used r script file path
+						contents = "rPath\t" + found + "\r\n"
+						contents = contents + "inputPath\t\r\n"
+						contents = contents + "outputPath\t\r\n"
+						contents = contents + "macroPath\t\r\n"
+						contents = contents + "rScriptPath\t\r\n"
+						writer.write(contents)
+						writer.close()
+					except IOException:
+						print "IO Exception"
+					break
+				
+
+###############################################################
+# Extends the class runnable to run on a seperate thread      #
+# Recieves a macro file from the ImageProcessorMenu instance  #
+# 	and runs the macro. After the macro is executed, it calls #
+#	the process method of the ImageProcessorMenu instance to  #
+#	create a macro for the next file.                         #
+# Cannot get a new constuctor to work otherwise the set       #
+# 	methods would just be part of the constructor             #
+###############################################################
 class macroRunner(Runnable):
 
 	# Overides the run method of the Runnable class
