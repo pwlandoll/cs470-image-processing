@@ -62,35 +62,6 @@ class DelimiterActionListener(ActionListener):
 
 
 class ImageProcessorMenu:
-	# Opens an open dialog box for the user to select a file
-	# Once selected, the file path is added to the textbox
-	def browseForFile(self,event):
-		# Creates a file chooser object
-		chooseFile = JFileChooser()
-
-		# Allow for selection of files or directories
-		chooseFile.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES)
-		chooseFile.setMultiSelectionEnabled(True)
-
-		# Filter results
-		filter = FileNameExtensionFilter("Image Files", ["jpg", "gif"])
-		chooseFile.addChoosableFileFilter(filter)
-		
-		# Show the chooser
-		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
-		if chooseFile.getSelectedFiles() is not None:
-			if len(chooseFile.getSelectedFiles()) != 1:
-				self.inputTextfield.text = "Multiple Files"
-			else:
-				self.inputTextfield.text = chooseFile.getSelectedFile().getPath()
-			if ret == JFileChooser.APPROVE_OPTION:
-				# Open the file using bio formats plugin
-				self.file = chooseFile.getSelectedFiles()
-				for x in range(0, len(self.file)):
-					tempFile = self.file[x].getPath()
-					imps = BF.openImagePlus(tempFile)
-					for imp in imps:
-						imp.show()
 
 	# Closes the program
 	def onExit(self, event):
@@ -200,12 +171,18 @@ class ImageProcessorMenu:
 		# Add a menu to the frame
 		menubar = JMenuBar()
 		file = JMenu("File")
+
+		# Create an exit menu option, Will close all windows associated with fiji
 		fileExit = JMenuItem("Exit", None, actionPerformed=self.onExit)
 		fileExit.setToolTipText("Exit application")
 		file.add(fileExit)
+
+		# Create a generalize macro menu option
 		createGeneralMacro = JMenuItem("Create Generalized Macro File", None, actionPerformed=self.generalizePrompts)
 		createGeneralMacro.setToolTipText("Create a macro file that can be used in the processing pipeline using an existings macro file")
 		file.add(createGeneralMacro)
+
+		# Add the menu to the frame
 		menubar.add(file)
 		self.frame.setJMenuBar(menubar)
 
@@ -242,6 +219,7 @@ class ImageProcessorMenu:
 	#Wrap method call so that it is callable outside this class' scope
 	setExtensionTextfieldEnabled = CallableWrapper(setExtensionTextfieldEnabled)
 		
+	# Launches file chooser dialog boxes to select a macro to generalize, and when file was used to create it
 	def generalizePrompts(self, event):
 		# Creates a file chooser object
 		chooseFile = JFileChooser()
@@ -249,39 +227,38 @@ class ImageProcessorMenu:
 		# Allow for selection of files or directories
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 
-		# Filter results
+		# Filter results to only .ijm files
 		filter = FileNameExtensionFilter("Macro File", ["ijm"])
 		chooseFile.addChoosableFileFilter(filter)
 		
-		# Show the chooser
+		# Show the chooser to select a .ijm file
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
+
+		# If a file is choosen continue to allow user to choose where to save the generalized file
 		if chooseFile.getSelectedFile() is not None:
 			if ret == JFileChooser.APPROVE_OPTION:
 				frame = JFrame();
+
+				# Creates a prompt asking the user of the name of the file used in creating the original macro
     			result = JOptionPane.showInputDialog(frame, "Enter image name used to create macro (including extension):");
     			if result != None:
     				self.generalize(chooseFile.getSelectedFile(), result)
 
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
-	# Needs to create a menu that will allow user to pick the file instead of a static one
-	def generalize(self, macroFile, imageName):
-		# Name of the file used to create the macro file, will change to prompt to ask user
-		file = imageName
+	# macroFile, type=File, The specific macro file
+	# file,	type=Sting, The name of the file used when creating the specific macro
+	def generalize(self, macroFile, file):
 		
 		# Name of the file without the file extension
 		fileName = file
 		if fileName.find(".") > 0:
 			fileName = fileName[0: fileName.find(".")]
 		
-		# Directory to create the general macro in
-		outputDir = File("C:\Users\Matthew\Documents\School\College\Fall 2015\cs470\outputs")
-		outputDir.mkdir()
-		
 		try:
 			fileContents = ""
 			string = ""
 
-			# Read in the original macro file
+			# Read in the original macro file using a buffered reader
 			br = BufferedReader(FileReader(macroFile))
 			string = br.readLine()
 			while string is not None:
@@ -290,18 +267,35 @@ class ImageProcessorMenu:
 				
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
+
+			# Replace the bio-formats importer directory path with INPUTPATH
 			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
+
+			# Replace the bio-formats exporter directory path with FILEPATH
 			fileContents = re.sub(r"save=[^\s\"]*\\",r"save=FILEPATH\\", fileContents)
+
+			# Replace the bio-formats exporter directory path with FILPEPATH followed by text used to inidcate
+			# 	what processing was done on the image and IMAGENAME
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
+
+			# Replace the save results directory path with FILEPATH
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\', fileContents)
+
+			# Replace the save text directory path with FILEPATH
 			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\', fileContents)
+
+			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
+
+			# Do not believe this is necessary, will keep till tested
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\1NOEXTENSION\2]", fileContents)
 
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
-			if fileChooser.showOpenDialog(self.frame) == JFileChooser.APPROVE_OPTION:
+			if fileChooser.showSaveDialog(self.frame) == JFileChooser.APPROVE_OPTION:
 				newMacro = fileChooser.getSelectedFile()
+
+				# Write genearalized macro using a buffered writer
 				writer = BufferedWriter(FileWriter(newMacro))
 				writer.write(fileContents)
 				writer.close()
@@ -326,12 +320,12 @@ class ImageProcessorMenu:
 		# Show the menu
 		menu.show(event.getSource(), event.getSource().getWidth(), 0)
 
-
+	# Creates a file chooser to select a file with a list of urls that link to images
 	def selectURLFile(self, event):
 		# Creates a file chooser object
 		chooseFile = JFileChooser()
 
-		# Allow for selection of directories
+		# Allow for selection of only files
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 		# Show the chooser
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose url file")
@@ -339,7 +333,9 @@ class ImageProcessorMenu:
 
 			# Save the selection to attributed associated with input or output
 			if ret == JFileChooser.APPROVE_OPTION:
+				# Save the path to the file
 				self.urlLocation = chooseFile.getSelectedFile().getPath()
+				# Change the text of the input textbox to the path to the url file
 				self.inputTextfield.setText(chooseFile.getSelectedFile().getPath())
 				self.shouldEnableStart()
 				
@@ -399,7 +395,7 @@ class ImageProcessorMenu:
 			if self.inputDirectory is not None or self.urlLocation is not None and self.outputDirectory is not None:
 				self.startButton.setEnabled(True)
 		except AttributeError:
-			print "Needed to put something here"
+			pass
 			
 	# Downloads the images from the url file
 	def start(self, event):
@@ -407,12 +403,17 @@ class ImageProcessorMenu:
 			if self.urlLocation is not None:
 				self.downloadFiles(self.urlLocation)
 		except AttributeError:
-			print "Need to add other functionality"
+			pass
 		self.runMacro()
 			
+	# Downloads each image in the file of image urls
 	def downloadFiles(self, filename):
+		# Make the input directory the location of the downloaded images
+		self.inputDirectory = self.outputDirectory.getPath() + "\\originalImages\\"
+		self.inputDirectory.mkdirs()
+		# Save each image in the file
 		for image in self.readURLList(filename):
-			IJ.save(image, self.outputDirectory.getPath() + "\\" + image.getTitle())
+			IJ.save(image, self.inputDirectory + image.getTitle())
 		
 	# returns an array of ImageJ image objects
 	def readURLList(self, filename):
@@ -468,7 +469,11 @@ class ImageProcessorMenu:
 
 		#Returns images as specified by the user and adds them to a list
 		listOfPicturesBasedOnUserSpecs = getImagesBasedOnUserFileSpecications(self, listOfPictures)
+
+		# Save the array of images to the instance
 		self.pictures = listOfPicturesBasedOnUserSpecs
+
+		# Create an index indicating which image in the array is next to be processed
 		self.index = 0
 		self.process()
 
@@ -493,19 +498,23 @@ class ImageProcessorMenu:
 			outputDir = File(self.outputDirectory.getPath() + "/" + fileName)
 			outputDir.mkdir()
 
-			# Create the specific macro by reading in the general macro file and modify it with regular expressions
 			# INPUTPATH: Replaced with the path to the file to be processed (path includes the file with extension)
 			# FILEPATH: Replaced with the path where any outputs from the macro will be saved
 			# IMAGENAME: Replaced with the name of the file with file extension
+			# NOEXTENSION: Replaced with the name of the file without file extension
+			# run("View Step"): Replaced with macro command to wait for user input to contine, allow user to make
+			#	sure the macro is working correctly
 			try:
 				fileContents = ""
 				string = ""
+				
 				# Read in the general macro
 				br = BufferedReader(FileReader(self.macroFile))
 				string = br.readLine()
 				while string is not None:
 					fileContents = fileContents + string
 					string = br.readLine()
+					
 				# Replace all the generalized strings with specifics
 				fileContents = fileContents.replace("INPUTPATH", file.getPath())
 				fileContents = fileContents.replace("FILEPATH", outputDir.getPath())
@@ -513,12 +522,24 @@ class ImageProcessorMenu:
 				fileContents = fileContents.replace("NOEXTENSION", fileName)
 				fileContents = fileContents.replace('run("View Step")','waitForUser("Press ok to continue")')
 				fileContents = fileContents.replace("\\","\\\\")
+
+				# Closes the results window if one opens
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
 			except IOException:
 				print "IOException"
+
+			# Create a macroRunner object to run the macro on a seperate thread
 			runner = macroRunner()
+
+			# Give the macroRunner object the macro to run
 			runner.setMacro(fileContents)
+
+			# Give the macroRunner object a reference to this menu so it can call process
+			# 	on this instance when it finishes running the macro so the next image can 
+			# 	be processed
 			runner.setReference(self)
+
+			# Start the macro
 			thread = Thread(runner)
 			thread.start()
 					
