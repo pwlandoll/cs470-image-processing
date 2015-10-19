@@ -69,6 +69,7 @@ class ImageProcessorMenu:
 	def onExit(self, event):
 		System.exit(0)
 
+	# Constructor
 	def __init__(self):
 		# Create the menu frame with size of 450x250
 		frameWidth = 450
@@ -194,7 +195,17 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
+		self.checkIfPathSet()
 
+	def checkIfPathSet(self):
+		pluginDir = IJ.getDir("plugins") + "\Medical_Image"
+		
+		# Create the file to house the path
+		file = File(pluginDir + "\Medical_Image_Processing.txt")
+
+		if not file.exists():
+			JOptionPane.showMessageDialog(self.frame, "No R path detected. You will be asked to select a directory\nIf you know the directory where R.exe is located select it.\n Otherwise, select your root directory (ie. C:/ or /root/)")
+			self.rSearch()
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
 		extTextfield = JTextField()
@@ -549,6 +560,53 @@ class ImageProcessorMenu:
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				copyOriginalImageToNewDirectory(self, fileName, outputDir)
 
+		# Searches for the R.exe file on the users system to give pyper the path to it
+	# Creates a file chooser to allow the user to specificy in which directory
+	#	and thus sub directories to look for it in. Allows the seach to happen
+	# 	faster if the user knows where to look, or lets user with no knowledge 
+	# 	of file systems find the file by specifiying the root of the drive
+	# Saves the path in the Medical_Image_Processing.txt file in the 
+	# 	Medical_Image folder found in the fiji plugins directory
+	def rSearch(self):
+		# File to search for
+		lookfor = 'R.exe'
+
+		# Create a file chooser to pick which directory to recrursively search in
+		chooser = JFileChooser()
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
+		if chooser.showDialog(self.frame, "Select") ==  JFileChooser.APPROVE_OPTION:
+
+			# Recursively search all directories starting in the path choosen by the user
+			for root, dirs, files in os.walk(chooser.getSelectedFile().getPath()):
+
+				# If the file is in one of the directories, store the path and break
+				if lookfor in files:
+					found = join(root, lookfor)
+					try:
+						# Path to the Medical_Image directory
+						pluginDir = IJ.getDir("plugins") + "\Medical_Image"
+
+						# Create the file to house the path
+						file = File(pluginDir + "\Medical_Image_Processing.txt")
+						writer = BufferedWriter(FileWriter(file))
+
+						# Create the contents of the file
+						# rPath: Path to R.exe on the users system
+						# inputPath: Last used input directory path
+						# outputPath: Last used output directory path 
+						# macroPath: Last used macro file path
+						# rScriptPath: Last used r script file path
+						contents = "rPath\t" + found + "\r\n"
+						contents = contents + "inputPath\t\r\n"
+						contents = contents + "outputPath\t\r\n"
+						contents = contents + "macroPath\t\r\n"
+						contents = contents + "rScriptPath\t\r\n"
+						writer.write(contents)
+						writer.close()
+					except IOException:
+						print "IO Exception"
+					break
+
 def validateUserInput(self, inputCategory, userInput, validInputs):
 	isValid = True
 	errorTitle = ""
@@ -602,52 +660,7 @@ def getImagesBasedOnUserFileSpecications(self, images):
 
 	return imagesToReturn
 
-	# Searches for the R.exe file on the users system to give pyper the path to it
-	# Creates a file chooser to allow the user to specificy in which directory
-	#	and thus sub directories to look for it in. Allows the seach to happen
-	# 	faster if the user knows where to look, or lets user with no knowledge 
-	# 	of file systems find the file by specifiying the root of the drive
-	# Saves the path in the Medical_Image_Processing.txt file in the 
-	# 	Medical_Image folder found in the fiji plugins directory
-	def rSearch(self):
-		# File to search for
-		lookfor = 'R.exe'
-
-		# Create a file chooser to pick which directory to recrursively search in
-		chooser = JFileChooser()
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
-		if chooser.showDialog(None, "Select") ==  JFileChooser.APPROVE_OPTION:
-
-			# Recursively search all directories starting in the path choosen by the user
-			for root, dirs, files in os.walk(chooser.getSelectedFile().getPath()):
-
-				# If the file is in one of the directories, store the path and break
-				if lookfor in files:
-					found = join(root, lookfor)
-					try:
-						# Path to the Medical_Image directory
-						pluginDir = IJ.getDir("plugins") + "\Medical_Image"
-
-						# Create the file to house the path
-						file = File(pluginDir + "\Medical_Image_Processing.txt")
-						writer = BufferedWriter(FileWriter(file))
-
-						# Create the contents of the file
-						# rPath: Path to R.exe on the users system
-						# inputPath: Last used input directory path
-						# outputPath: Last used output directory path 
-						# macroPath: Last used macro file path
-						# rScriptPath: Last used r script file path
-						contents = "rPath\t" + found + "\r\n"
-						contents = contents + "inputPath\t\r\n"
-						contents = contents + "outputPath\t\r\n"
-						contents = contents + "macroPath\t\r\n"
-						contents = contents + "rScriptPath\t\r\n"
-						writer.write(contents)
-						writer.close()
-					except IOException:
-						print "IO Exception"
-					break
+	
 				
 
 ###############################################################
