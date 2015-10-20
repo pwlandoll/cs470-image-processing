@@ -1,4 +1,4 @@
-import os
+mport os
 import re
 
 from os.path import join
@@ -48,6 +48,7 @@ from loci.plugins import BF
 
 from pyper import *
 
+
 #Wraps a method call to allow static methods to be called from ImageProcessorMenu
 class CallableWrapper:
 	def __init__(self, any):
@@ -64,26 +65,24 @@ class DelimiterActionListener(ActionListener):
 
 
 class ImageProcessorMenu:
-
 	# Closes the program
 	def onExit(self, event):
 		System.exit(0)
 
 	# Constructor
 	def __init__(self):
-		# Create the menu frame with size of 450x250
-		frameWidth = 450
-		frameHeight = 400
+		# Create the menu frame with size of 450x400
+		frameWidth, frameHeight = 450, 400
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(frameWidth, frameHeight)
 		self.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
 
 		# Add a panel to the frame
 		pnl = JPanel()
-		pnl.setBounds(10,10,480,230)
+		pnl.setBounds(10,10,480,230) #TODO: What are these? Use frameWidth/Height
 		#pnl.setLayout(BoxLayout(BoxLayout.LINE_AXIS)
 		self.frame.add(pnl)
-		
+
 		# Add a textfield to the frame to display the input directory
 		self.inputTextfield = JTextField(30)
 		self.inputTextfield.setText("Select Import Directory")
@@ -129,7 +128,7 @@ class ImageProcessorMenu:
 
 		#Save south-most panel as globally accessible object in order to iterate through pertinent components
 		ImageProcessorMenu.fileSpecificationsPanel = pnl
-		
+
 		#Label for textfield below
 		self.extensionLabel = JLabel("File Extensions:")
 		pnl.add(self.extensionLabel)
@@ -141,7 +140,7 @@ class ImageProcessorMenu:
 		self.delimeterComboBox.addItem("Exclude")
 		self.delimeterComboBox.addActionListener(DelimiterActionListener())
 		pnl.add(self.delimeterComboBox)
-		
+
 		# Add a textfield to the frame to get the user's selected file extensions
 		self.extensionTextfield = JTextField(30)
 		self.extensionTextfield.setText("Example: .jpg, .png")
@@ -151,11 +150,11 @@ class ImageProcessorMenu:
 		#Label for textfield below
 		self.containsLabel = JLabel("File Name Contains:")
 		pnl.add(self.containsLabel)
-		
+
 		# Add a textfield to the frame to get the specified text that a filename must contain
 		self.containsTextfield = JTextField(30)
 		pnl.add(self.containsTextfield)
-		
+
 		#Add a checkbox which determines whether or not to copy the original image file(s) to the newly created directory/directories
 		self.copyImageToNewDirectoryCheckBox = JCheckBox("Make a Copy of Pre-Processed Image(s) in Output Directory")
 		pnl.add(self.copyImageToNewDirectoryCheckBox)
@@ -170,7 +169,7 @@ class ImageProcessorMenu:
 		self.startButton.setEnabled(False)
 		self.startButton.setPreferredSize(Dimension(150,40))
 		pnl.add(self.startButton)
-		
+
 		# Add a menu to the frame
 		menubar = JMenuBar()
 		file = JMenu("File")
@@ -191,7 +190,7 @@ class ImageProcessorMenu:
 
 		#Disable file extension textfield off the bat
 		self.setExtensionTextfieldEnabled("All File Types")
-		
+
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
@@ -199,7 +198,7 @@ class ImageProcessorMenu:
 
 	def checkIfPathSet(self):
 		pluginDir = IJ.getDir("plugins") + "\Medical_Image"
-		
+
 		# Create the file to house the path
 		file = File(pluginDir + "\Medical_Image_Processing.txt")
 
@@ -213,25 +212,25 @@ class ImageProcessorMenu:
 		for c in ImageProcessorMenu.fileSpecificationsPanel.getComponents():
 			if (isinstance(c,JTextField)):
 				if (c.getName() == "Extensions"):
-					extTextfield = c	
-									
+					extTextfield = c
+
 		#Enable the textfield
 		if (selectedDelimiter == "All File Types"):
 			border = BorderFactory.createLineBorder(Color.black)
 			extTextfield.setEnabled(False)
-  			extTextfield.setDisabledTextColor(Color.black)
-  			extTextfield.setBackground(Color.lightGray)
+			extTextfield.setDisabledTextColor(Color.black)
+			extTextfield.setBackground(Color.lightGray)
 			extTextfield.setBorder(border)
 		#Disable the textfield
 		else:
 			border = BorderFactory.createLineBorder(Color.gray)
 			extTextfield.setEnabled(True)
-  			extTextfield.setBackground(Color.white)
+			extTextfield.setBackground(Color.white)
 			extTextfield.setBorder(border)
 
 	#Wrap method call so that it is callable outside this class' scope
 	setExtensionTextfieldEnabled = CallableWrapper(setExtensionTextfieldEnabled)
-		
+
 	# Launches file chooser dialog boxes to select a macro to generalize, and when file was used to create it
 	def generalizePrompts(self, event):
 		# Creates a file chooser object
@@ -240,11 +239,11 @@ class ImageProcessorMenu:
 		# Allow for selection of files or directories
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 
-		# Filter results to only .ijm files
+		# Filter results to only .ijm files
 		filter = FileNameExtensionFilter("Macro File", ["ijm"])
 		chooseFile.addChoosableFileFilter(filter)
-		
-		# Show the chooser to select a .ijm file
+
+		# Show the chooser to select a .ijm file
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
 
 		# If a file is choosen continue to allow user to choose where to save the generalized file
@@ -253,31 +252,30 @@ class ImageProcessorMenu:
 				frame = JFrame();
 
 				# Creates a prompt asking the user of the name of the file used in creating the original macro
-    			result = JOptionPane.showInputDialog(frame, "Enter image name used to create macro (including extension):");
-    			if result != None:
-    				self.generalize(chooseFile.getSelectedFile(), result)
+				result = JOptionPane.showInputDialog(frame, "Enter image name used to create macro (including extension):");
+				if result != None:
+					self.generalize(chooseFile.getSelectedFile(), result)
 
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# macroFile, type=File, The specific macro file
 	# file,	type=Sting, The name of the file used when creating the specific macro
 	def generalize(self, macroFile, file):
-		
 		# Name of the file without the file extension
 		fileName = file
 		if fileName.find(".") > 0:
 			fileName = fileName[0: fileName.find(".")]
-		
+
 		try:
 			fileContents = ""
 			string = ""
 
-			# Read in the original macro file using a buffered reader
+			# Read in the original macro file using a buffered reader
 			br = BufferedReader(FileReader(macroFile))
 			string = br.readLine()
 			while string is not None:
 				fileContents = fileContents + string
 				string = br.readLine()
-				
+
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
 
@@ -351,7 +349,7 @@ class ImageProcessorMenu:
 				# Change the text of the input textbox to the path to the url file
 				self.inputTextfield.setText(chooseFile.getSelectedFile().getPath())
 				self.shouldEnableStart()
-				
+
 	# Sets the input directory
 	def setInputDirectory(self, event):
 		self.setDirectory("Input")
@@ -380,11 +378,10 @@ class ImageProcessorMenu:
 		else:
 			#Allow for selection of files
 			chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-			
+
 		# Show the chooser
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose " + directoryType + " directory")
 		if chooseFile.getSelectedFiles() is not None:
-		
 			# Save the selection to attributed associated with input or output
 			if ret == JFileChooser.APPROVE_OPTION:
 				if directoryType == "Input":
@@ -401,7 +398,7 @@ class ImageProcessorMenu:
 					self.rScriptDirectory = chooseFile.getSelectedFile() 
 					self.rScriptSelectTextfield.setText(chooseFile.getSelectedFile().getPath())
 				self.shouldEnableStart()
-				
+
 	def shouldEnableStart(self):
 		# Enable the start button if both an input and output have been selected
 		try:
@@ -409,7 +406,7 @@ class ImageProcessorMenu:
 				self.startButton.setEnabled(True)
 		except AttributeError:
 			pass
-			
+
 	# Downloads the images from the url file
 	def start(self, event):
 		try:
@@ -418,7 +415,7 @@ class ImageProcessorMenu:
 		except AttributeError:
 			pass
 		self.runMacro()
-			
+
 	# Downloads each image in the file of image urls
 	def downloadFiles(self, filename):
 		# Make the input directory the location of the downloaded images
@@ -427,7 +424,7 @@ class ImageProcessorMenu:
 		# Save each image in the file
 		for image in self.readURLList(filename):
 			IJ.save(image, self.inputDirectory + image.getTitle())
-		
+
 	# returns an array of ImageJ image objects
 	def readURLList(self, filename):
 		f, images = open(filename, 'r'), []
@@ -451,31 +448,29 @@ class ImageProcessorMenu:
 		#Accepted file types
 		self.validFileExtensions = [".png", ".jpg", ".gif", ".txt", ".tif", ".ini"]
 
-  		self.choice = self.delimeterComboBox.getSelectedItem()
+			self.choice = self.delimeterComboBox.getSelectedItem()
 
-  		#Get user's desired file extensions
-  		if (self.choice == "All File Types"):
-  			self.selectedExtensions = self.validFileExtensions
-  			
-  		else:
-  			self.selectedExtensions = self.extensionTextfield.getText()
-  			self.selectedExtensions = self.selectedExtensions.lower()
-  			self.selectedExtensions = self.selectedExtensions.split(", ")
+		#Get user's desired file extensions
+		if (self.choice == "All File Types"):
+			self.selectedExtensions = self.validFileExtensions
+		else:
+			self.selectedExtensions = self.extensionTextfield.getText()
+			self.selectedExtensions = self.selectedExtensions.lower()
+			self.selectedExtensions = self.selectedExtensions.split(", ")
 
-  		#Validation routine to ensure selected file extensions are valid and comma seperated
-  		if not (validateUserInput(self, self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
-  			return
-		
+		#Validation routine to ensure selected file extensions are valid and comma seperated
+		if not (validateUserInput(self, self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
+			return
+
 		#Get file name contains pattern
 		self.containString = self.containsTextfield.getText()
 
 		# Location of the generalized macro function, this will be a prompt where the user selects the file
 		self.macroFile = File(self.macroDirectory.getPath())
-		
 
 		#Validation routine to ensure selected macro file is actually a macro file (file extension = '.ijm')
-  		if not (validateUserInput(self, self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
-  			return
+		if not (validateUserInput(self, self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
+			return
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
@@ -497,7 +492,6 @@ class ImageProcessorMenu:
 	def readInMacro(self):
 		fileContents = ""
 		string = ""
-		
 		# Read in the general macro
 		br = BufferedReader(FileReader(self.macroFile))
 		string = br.readLine()
@@ -506,7 +500,6 @@ class ImageProcessorMenu:
 			string = br.readLine()
 		self.macroString = fileContents
 
-	
 	# Gets the next image to process and creates a specific macro for that file
 	# Creates an instance of macroRunner to run the macro on a seperate thread
 	def process(self):
@@ -515,15 +508,15 @@ class ImageProcessorMenu:
 
 			# Image to process
 			file = self.pictures[self.index]
-			
+
 			# Increase the index indicating which file to be processed next
 			self.index = self.index + 1
-			
+
 			# The name of the image without a file extension
 			fileName = file.getName()
 			if fileName.index(".") > 0:
 				fileName = fileName[0: fileName.index(".")]
-		
+
 			# Create a folder with the name of the image in the output folder to house any outputs of the macro
 			outputDir = File(self.outputDirectory.getPath() + "/" + fileName)
 			outputDir.mkdir()
@@ -565,12 +558,12 @@ class ImageProcessorMenu:
 			# Start the macro
 			thread = Thread(runner)
 			thread.start()
-					
+
 			#Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				copyOriginalImageToNewDirectory(self, fileName, outputDir)
 
-		# Searches for the R.exe file on the users system to give pyper the path to it
+	# Searches for the R.exe file on the users system to give pyper the path to it
 	# Creates a file chooser to allow the user to specificy in which directory
 	#	and thus sub directories to look for it in. Allows the seach to happen
 	# 	faster if the user knows where to look, or lets user with no knowledge 
@@ -621,12 +614,12 @@ def validateUserInput(self, inputCategory, userInput, validInputs):
 	isValid = True
 	errorTitle = ""
 	errorMessage = ""
-	
+
 	for ext in userInput:
 		if not (ext in validInputs):
-			isValid = False 			
+			isValid = False
 
- 	if not(isValid):
+	if not(isValid):
 		self.frameToDispose = GenericDialog("")
 		if (inputCategory == "Extensions"):
 			errorTitle = "ERROR - Invalid File Extension Format(s)"
@@ -634,7 +627,7 @@ def validateUserInput(self, inputCategory, userInput, validInputs):
 		elif (inputCategory == "Macro File"):
 			errorTitle = "ERROR - Invalid Macro File"
 			errorMessage = "Error: You Have Selected an Invalid Macro File.  Please Ensure Your Selected File Ends With '.ijm'."
-			
+
 		self.frameToDispose.setTitle(errorTitle)
 		self.frameToDispose.addMessage(errorMessage)
 		self.frameToDispose.showDialog()
@@ -643,9 +636,9 @@ def validateUserInput(self, inputCategory, userInput, validInputs):
 
 #Copies the original image from the existing directory to the newly created one
 def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
-  	img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave)
-  	IJ.save(img, outputDir.getPath() + "\\" + fileToSave)
-  	img.close()
+	img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave)
+	IJ.save(img, outputDir.getPath() + "\\" + fileToSave)
+	img.close()
 
 #Gets values from file specification components within the JPanel and returns images based on user's specifications
 def getImagesBasedOnUserFileSpecications(self, images):
@@ -670,23 +663,20 @@ def getImagesBasedOnUserFileSpecications(self, images):
 
 	return imagesToReturn
 
-	
-				
 
-###############################################################
-# Extends the class runnable to run on a seperate thread      #
-# Recieves a macro file from the ImageProcessorMenu instance  #
+###############################################################
+# Extends the class runnable to run on a seperate thread      #
+# Recieves a macro file from the ImageProcessorMenu instance  #
 # 	and runs the macro. After the macro is executed, it calls #
-#	the process method of the ImageProcessorMenu instance to  #
-#	create a macro for the next file.                         #
-# Cannot get a new constuctor to work otherwise the set       #
-# 	methods would just be part of the constructor             #
-###############################################################
+#	the process method of the ImageProcessorMenu instance to  #
+#	create a macro for the next file.                         #
+# Cannot get a new constuctor to work otherwise the set       #
+# 	methods would just be part of the constructor             #
+###############################################################
 class macroRunner(Runnable):
-
 	# Overides the run method of the Runnable class
 	# Creates an instance of Interpreter to run the macro
-	# Runs the macro in the instance and calls process on 
+	# Runs the macro in the instance and calls process on
 	#	the ImageProcessorMenu instance
 	def run(self):
 		inter = Interpreter()
