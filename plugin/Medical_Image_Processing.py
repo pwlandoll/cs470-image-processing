@@ -486,10 +486,27 @@ class ImageProcessorMenu:
 		# Save the array of images to the instance
 		self.pictures = listOfPicturesBasedOnUserSpecs
 
+		# Read in the macro file with a buffered reader
+		self.readInMacro()
+		
 		# Create an index indicating which image in the array is next to be processed
 		self.index = 0
 		self.process()
 
+	#Reads in the macro file and stores it as a string to be modified during process
+	def readInMacro(self):
+		fileContents = ""
+		string = ""
+		
+		# Read in the general macro
+		br = BufferedReader(FileReader(self.macroFile))
+		string = br.readLine()
+		while string is not None:
+			fileContents = fileContents + string
+			string = br.readLine()
+		self.macroString = fileContents
+
+	
 	# Gets the next image to process and creates a specific macro for that file
 	# Creates an instance of macroRunner to run the macro on a seperate thread
 	def process(self):
@@ -518,15 +535,8 @@ class ImageProcessorMenu:
 			# run("View Step"): Replaced with macro command to wait for user input to contine, allow user to make
 			#	sure the macro is working correctly
 			try:
-				fileContents = ""
-				string = ""
-				
-				# Read in the general macro
-				br = BufferedReader(FileReader(self.macroFile))
-				string = br.readLine()
-				while string is not None:
-					fileContents = fileContents + string
-					string = br.readLine()
+				# Copy the macro string to be modified, leaving the original
+				fileContents = self.macroString
 					
 				# Replace all the generalized strings with specifics
 				fileContents = fileContents.replace("INPUTPATH", file.getPath())
