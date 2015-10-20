@@ -289,6 +289,7 @@ class ImageProcessorMenu:
 			# 	what processing was done on the image and IMAGENAME
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
 
+			# TODO: Fix these re.sub() errors
 			# Replace the save results directory path with FILEPATH
 			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\', fileContents)
 
