@@ -1,4 +1,4 @@
-mport os
+import os
 import re
 
 from os.path import join
@@ -302,6 +302,17 @@ class ImageProcessorMenu:
 			# Do not believe this is necessary, will keep till tested
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\1NOEXTENSION\2]", fileContents)
 
+			# Replace all paths found in the open command with INPUTPATH\\IMAGENAME
+			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH\\IMAGENAME"', fileContents)
+
+			# Replace all paths found using run("save") with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
+			fileContents = re.sub('run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH\\\1IMAGENAME]"', fileContents)
+			fileContents = re.sub('run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH\\\1NOEXTENSION\2]"', fileContents)
+
+			# Replace all paths found using saveAs with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
+			fileContents = re.sub('saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\2IMAGENAME")', fileContents)
+			fileContents = re.sub('saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\2NOEXTENSION\3")', fileContents)
+			
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
 			if fileChooser.showSaveDialog(self.frame) == JFileChooser.APPROVE_OPTION:
@@ -448,8 +459,7 @@ class ImageProcessorMenu:
 	def runMacro(self):
 		#Accepted file types
 		self.validFileExtensions = [".png", ".jpg", ".gif", ".txt", ".tif", ".ini"]
-
-			self.choice = self.delimeterComboBox.getSelectedItem()
+		self.choice = self.delimeterComboBox.getSelectedItem()
 
 		#Get user's desired file extensions
 		if (self.choice == "All File Types"):
