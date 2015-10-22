@@ -14,8 +14,8 @@ hs_err_pid*
 # Compiled Python Files
 *.pyc
 
-# Ignore R stuff
-*.R*
+# Ignore R stuff <- yeah, we actually shouldn't ignore this after all...
+# *.R*
 
 # Ignore OS X .DS_store
 *.DS_store
