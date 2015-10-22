@@ -9,9 +9,12 @@ from ij import WindowManager
 from ij.gui import GenericDialog
 from ij.macro import Interpreter
 
+from java.awt import BorderLayout
 from java.awt import Color
+from java.awt import Container
 from java.awt import Dimension
 from java.awt.event import ActionListener
+from java.awt.event import WindowAdapter
 
 from java.io import BufferedReader
 from java.io import BufferedWriter
@@ -38,6 +41,7 @@ from javax.swing import JMenu
 from javax.swing import JMenuBar
 from javax.swing import JMenuItem
 from javax.swing import JPopupMenu
+from javax.swing import JProgressBar;
 from javax.swing import JOptionPane
 from javax.swing import JSeparator
 from javax.swing import SwingConstants
@@ -63,6 +67,18 @@ class DelimiterActionListener(ActionListener):
 		#Enable/Disable extension textfield based on selected delimiter
 		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
 
+# This plugin creates a menu to batch process images using imagej's macro files.
+# This pluign requires the user to have R installed on their machine.
+# This plugin requires the user to have created a macro file with imagej's macro recorder
+#	or to have hand crafted one.
+# The plugin will then take that macro that was created from one specific image, and 
+#	generalize it so that it can be used for batch processing of images.
+# The user can select either a directory containing images, or a text file containing 
+#	a list of urls to images. Then they select an output folder, where any new files
+#	will be saved. Then they select one of the generalized macro files they have created.
+#	They can then press start and it will perform the macro operation on all images found
+#	in the directory or in the text file. When finished the results will be fed into an R
+#	script for analyzing (need to implement)
 
 class ImageProcessorMenu:
 	# Closes the program
@@ -514,9 +530,22 @@ class ImageProcessorMenu:
 	# Gets the next image to process and creates a specific macro for that file
 	# Creates an instance of macroRunner to run the macro on a seperate thread
 	def process(self):
+	
+		# True when processing the first image
+		if self.index == 0:
+			# Hide the main menu
+			self.frame.setVisible(False)
+
+			# Create the progress menu and pass it a reference to the main menu
+			self.macroMenu = MacroProgressMenu()
+			self.macroMenu.setMenuReference(self)
+			
 		# Checks that there is another image to process
 		if self.index < len(self.pictures):
 
+			# Increase the progress bar's value
+			self.macroMenu.setProgressBarValue(int(((self.index + 1.0) / len(self.pictures)) * 100))
+			
 			# Image to process
 			file = self.pictures[self.index]
 
@@ -556,23 +585,28 @@ class ImageProcessorMenu:
 				print "IOException"
 
 			# Create a macroRunner object to run the macro on a seperate thread
-			runner = macroRunner()
+			self.runner = macroRunner()
 
 			# Give the macroRunner object the macro to run
-			runner.setMacro(fileContents)
+			self.runner.setMacro(fileContents)
 
 			# Give the macroRunner object a reference to this menu so it can call process
 			# 	on this instance when it finishes running the macro so the next image can 
 			# 	be processed
-			runner.setReference(self)
+			self.runner.setReference(self)
 
 			# Start the macro
-			thread = Thread(runner)
+			thread = Thread(self.runner)
 			thread.start()
 
 			#Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				copyOriginalImageToNewDirectory(self, fileName, outputDir)
+		else:
+			# Macros are finished running, so show the main menu and dispose
+			#	of the progress menu.
+			self.frame.setVisible(True)
+			self.macroMenu.disposeMenu()
 
 	# Searches for the R.exe file on the users system to give pyper the path to it
 	# Creates a file chooser to allow the user to specificy in which directory
@@ -674,6 +708,61 @@ def getImagesBasedOnUserFileSpecications(self, images):
 
 	return imagesToReturn
 
+# Extends the WindowAdapter class: does this to overide the windowClosing method
+#	to create a custom close operation.
+# Creates a progress bar indicating what percentage of images have been processed
+# Closing the menu will stop the images from being processed
+class MacroProgressMenu(WindowAdapter):
+	def __init__(self):
+		# Create a frame as backbone for the menu, add listener for custom close operation
+		self.macroMenuFrame = JFrame("Processing Images...")
+		self.macroMenuFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
+		self.macroMenuFrame.addWindowListener(self)
+		
+		content = self.macroMenuFrame.getContentPane()
+
+		# Create the progess bar
+		self.progressBar = JProgressBar()
+		self.setProgressBarValue(0)
+		self.progressBar.setStringPainted(True)
+
+		# Add a border
+		border = BorderFactory.createTitledBorder("Processing...");
+		self.progressBar.setBorder(border)
+		content.add(self.progressBar, BorderLayout.NORTH)
+
+		# Set size and show frame
+		self.macroMenuFrame.setSize(300, 100)
+		self.macroMenuFrame.setVisible(True)
+		
+	# Sets a reference to the main menu
+	# Would put in constructor, but cannot get variables to be passed in that way
+	def setMenuReference(self, ref):
+		self.ref = ref
+
+	# Sets the progress bar's value
+	def setProgressBarValue(self, value):
+		self.progressBar.setValue(value)
+
+	# Override
+	# Custom on close opperation
+	def windowClosing(self, event):
+	
+		# Stops currently ruuing macro
+		self.ref.runner.abortMacro()
+		
+		# Shows the main menu
+		self.ref.frame.setVisible(True)
+
+		# Disposes of this progress menu
+		self.disposeMenu()
+
+	# Disposes of this progress menu
+	def disposeMenu(self):
+		self.macroMenuFrame.dispose()
+		
+
+	
 
 ###############################################################
 # Extends the class runnable to run on a seperate thread      #
@@ -684,14 +773,14 @@ def getImagesBasedOnUserFileSpecications(self, images):
 # Cannot get a new constuctor to work otherwise the set       #
 # 	methods would just be part of the constructor             #
 ###############################################################
-class macroRunner(Runnable):
+class macroRunner(Runnable):		
 	# Overides the run method of the Runnable class
 	# Creates an instance of Interpreter to run the macro
 	# Runs the macro in the instance and calls process on
 	#	the ImageProcessorMenu instance
 	def run(self):
-		inter = Interpreter()
-		inter.run(self.macroString)
+		self.inter = Interpreter()
+		self.inter.run(self.macroString)
 		self.ref.process()
 
 	# Sets the macro file
@@ -703,6 +792,10 @@ class macroRunner(Runnable):
 	# ref, the ImageProcessMenu instance
 	def setReference(self, ref):
 		self.ref = ref
+
+	# Aborts the currently running macro
+	def abortMacro(self):
+		self.inter.abort()
 
 if __name__ == '__main__':
 	#start things off.
