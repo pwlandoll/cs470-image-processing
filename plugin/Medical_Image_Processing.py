@@ -292,6 +292,12 @@ class ImageProcessorMenu:
 				fileContents = fileContents + string
 				string = br.readLine()
 
+			# Inserts in import function if the user did not use one
+			if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
+				fileContents = 'run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");' + fileContents
+
+			
+
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
 
@@ -322,12 +328,16 @@ class ImageProcessorMenu:
 			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH\\IMAGENAME"', fileContents)
 
 			# Replace all paths found using run("save") with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
-			fileContents = re.sub('run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH\\\1IMAGENAME]"', fileContents)
-			fileContents = re.sub('run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH\\\1NOEXTENSION\2]"', fileContents)
+			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH\\\1IMAGENAME]"', fileContents)
+			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH\\\1NOEXTENSION\2]"', fileContents)
 
 			# Replace all paths found using saveAs with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
-			fileContents = re.sub('saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\2IMAGENAME")', fileContents)
-			fileContents = re.sub('saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\2NOEXTENSION\3")', fileContents)
+			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\2IMAGENAME")', fileContents)
+			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\2NOEXTENSION\3")', fileContents)
+
+			# Inserts a save results function if a results window is open and the user did not save it
+			if fileContents.find('saveAs("Results"') == -1:
+				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\Results.csv\");}"
 			
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
