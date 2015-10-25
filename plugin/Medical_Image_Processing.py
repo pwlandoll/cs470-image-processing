@@ -290,13 +290,7 @@ class ImageProcessorMenu:
 			string = br.readLine()
 			while string is not None:
 				fileContents = fileContents + string
-				string = br.readLine()
-
-			# Inserts in import function if the user did not use one
-			if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
-				fileContents = 'run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");' + fileContents
-
-			
+				string = br.readLine()			
 
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
@@ -309,35 +303,81 @@ class ImageProcessorMenu:
 
 			# Replace the bio-formats exporter directory path with FILPEPATH followed by text used to inidcate
 			# 	what processing was done on the image and IMAGENAME
-			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\1IMAGENAME]", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\\\1IMAGENAME]", fileContents)
 
 			# TODO: Fix these re.sub() errors
 			# Replace the save results directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\\\', fileContents)
 
 			# Replace the save text directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\\\', fileContents)
 
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
 
 			# Do not believe this is necessary, will keep till tested
-			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\1NOEXTENSION\2]", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\\\1NOEXTENSION\2]", fileContents)
 
 			# Replace all paths found in the open command with INPUTPATH\\IMAGENAME
-			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH\\IMAGENAME"', fileContents)
+			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH\\\\IMAGENAME"', fileContents)
 
 			# Replace all paths found using run("save") with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
-			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH\\\1IMAGENAME]"', fileContents)
-			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH\\\1NOEXTENSION\2]"', fileContents)
+			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH\\\\\1IMAGENAME]"', fileContents)
+			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH\\\\\1NOEXTENSION\2]"', fileContents)
 
 			# Replace all paths found using saveAs with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
-			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\2IMAGENAME")', fileContents)
-			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\2NOEXTENSION\3")', fileContents)
+			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\\\2IMAGENAME")', fileContents)
+			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\\\2NOEXTENSION\3")', fileContents)
 
+			# Split the macro by ; and add the text ;saveChanges(); inbetween each split to save any images changes that might have occured
+			# This calls the function saveChanges() defined in the macro
+			listOfLines = fileContents.split(";")
+			fileContents = ""
+			for line in listOfLines:
+				fileContents = fileContents + line + ";" + "saveChanges();"
+			
+			# Inserts in import function if the user did not use one
+			if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
+				importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
+							  'run("Stack to RGB");'
+							  'selectedImage = getImageID();'
+							  'for (i=0; i < nImages; i++){ '
+							  'selectImage(i+1);'
+							  'if(!(selectedImage == getImageID())){'
+							  'close();i = i - 1;}}'
+							  'selectImage(selectedImage);')
+				fileContents = importCode + fileContents
+				
 			# Inserts a save results function if a results window is open and the user did not save it
 			if fileContents.find('saveAs("Results"') == -1:
-				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\Results.csv\");}"
+				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\\\Results.csv\");}"
+
+			# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
+			functionToSave = ('function saveChanges(){'
+							  'if(nImages != 0){'
+							  'selectedImage = getImageID();'
+							  'for (i=0; i < nImages; i++){ '
+							  'selectImage(i+1);'
+							  'title = replace(getTitle(), " ", "_");'
+							  'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
+							  'title = substring(title, 0, indexOf(title, "_", indexOf(title, ".")));}'
+							  'if(!File.exists("[FILEPATH\\\\" + title + "]")){'
+							  'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+							  '}'
+						      'if(is("changes")){'
+						      'name = substring(title, 0, indexOf(title, "."));'
+						      'titleIteration = 0;'
+						      'ext = substring(title, indexOf(title, "."));'
+						      'while(File.exists("[FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext + "]")){'
+						      'titleIteration = titleIteration + 1;'
+						      '}'
+						      'title = name + "(" + titleIteration + ")" + ext;'
+						      'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+						      'setOption("Changes", false);'
+						      '}}selectImage(selectedImage);}}')
+			fileContents = functionToSave + fileContents
+
+			fileContents = fileContents + 'if(nImages != 0){for (i=0; i < nImages; i++){selectImage(i+1);close();}'
 			
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
@@ -582,12 +622,12 @@ class ImageProcessorMenu:
 				fileContents = self.macroString
 					
 				# Replace all the generalized strings with specifics
-				fileContents = fileContents.replace("INPUTPATH", file.getPath())
-				fileContents = fileContents.replace("FILEPATH", outputDir.getPath())
-				fileContents = fileContents.replace("IMAGENAME", file.getName())
-				fileContents = fileContents.replace("NOEXTENSION", fileName)
+				fileContents = fileContents.replace("INPUTPATH", file.getPath().replace("\\","\\\\"))
+				fileContents = fileContents.replace("FILEPATH", outputDir.getPath().replace("\\","\\\\"))
+				fileContents = fileContents.replace("IMAGENAME", file.getName().replace("\\","\\\\"))
+				fileContents = fileContents.replace("NOEXTENSION", fileName.replace("\\","\\\\"))
 				fileContents = fileContents.replace('run("View Step")','waitForUser("Press ok to continue")')
-				fileContents = fileContents.replace("\\","\\\\")
+				#fileContents = fileContents.replace("\\","\\\\")
 
 				# Closes the results window if one opens
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
