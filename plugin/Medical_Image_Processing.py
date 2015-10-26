@@ -1,8 +1,6 @@
 import os
 import re
 
-from os.path import join
-
 from ij import IJ
 from ij import Menus
 from ij import WindowManager
@@ -50,7 +48,7 @@ from javax.swing.filechooser import FileNameExtensionFilter
 
 from loci.plugins import BF
 
-from pyper import *
+from os.path import join
 
 
 #Wraps a method call to allow static methods to be called from ImageProcessorMenu
@@ -214,13 +212,12 @@ class ImageProcessorMenu:
 
 	def checkIfPathSet(self):
 		pluginDir = IJ.getDir("plugins") + "\Medical_Image"
-
 		# Create the file to house the path
 		file = File(pluginDir + "\Medical_Image_Processing.txt")
-
 		if not file.exists():
 			JOptionPane.showMessageDialog(self.frame, "No R path detected. You will be asked to select a directory\nIf you know the directory where R.exe is located select it.\n Otherwise, select your root directory (ie. C:/ or /root/)")
-			self.rSearch()
+			self.rScriptSearch()
+
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
 		extTextfield = JTextField()
@@ -262,7 +259,7 @@ class ImageProcessorMenu:
 		# Show the chooser to select a .ijm file
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
 
-		# If a file is choosen continue to allow user to choose where to save the generalized file
+		# If a file is chosen continue to allow user to choose where to save the generalized file
 		if chooseFile.getSelectedFile() is not None:
 			if ret == JFileChooser.APPROVE_OPTION:
 				frame = JFrame();
@@ -290,7 +287,7 @@ class ImageProcessorMenu:
 			string = br.readLine()
 			while string is not None:
 				fileContents = fileContents + string
-				string = br.readLine()			
+				string = br.readLine()
 
 			# Replace anywhere text in the macro file where the images name is used with IMAGENAME
 			fileContents = fileContents.replace(file, "IMAGENAME")
@@ -305,12 +302,11 @@ class ImageProcessorMenu:
 			# 	what processing was done on the image and IMAGENAME
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\\\1IMAGENAME]", fileContents)
 
-			# TODO: Fix these re.sub() errors
 			# Replace the save results directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\\\', fileContents)
-
+			# TODO FIX ME fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\\\', fileContents)
+			#FIXME
 			# Replace the save text directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\\\', fileContents)
+			# TODO FIX ME fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\\\', fileContents)
 
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
@@ -511,15 +507,10 @@ class ImageProcessorMenu:
 		f.close()
 		return images
 
-	def runRScript(self, dataFilename, scriptFilename):
-		# R() can be given a path to the R executable if necessary
-		# e.g. R("C:/Program Files/R/R-3.2.2/bin")
-		if self.rcmd:
-			r = R(RCMD="%s" % self.rcmd)
-		else:
-			r = R()
-		r("imageData = read.csv('%s')" % dataFilename)
-		r("source('%s')" % scriptFilename)
+	def runRScript(self, scriptFilename):
+		if not self.rcommand:
+			self.rcommand = "Rscript"
+		os.system("{!s} {!s}".format(self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -680,6 +671,7 @@ class ImageProcessorMenu:
 				# If the file is in one of the directories, store the path and break
 				if lookfor in files:
 					found = join(root, lookfor)
+					self.rcommand = found
 					try:
 						# Path to the Medical_Image directory
 						pluginDir = IJ.getDir("plugins") + "\Medical_Image"
@@ -704,6 +696,28 @@ class ImageProcessorMenu:
 					except IOException:
 						print "IO Exception"
 					break
+
+	# Looks for RScript.exe
+	def rScriptSearch(self):
+		chooseFile = JFileChooser()
+		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+		# TODO: Verify that the selected file is Rscript
+		if chooseFile.showDialog(self.frame, "Select") is not None:
+			self.rcommand = chooseFile.getSelectedFile()
+		#JOptionPane.showMessageDialog(self.frame, self.rcommand)
+		#self.saveToFile()
+
+	# Funtion to open the text file where data is saved
+	def saveToFile(self):
+		try:
+			pluginDir = IJ.getDir("plugins") + "/Medical_Image"
+			f = File(pluginDir + "/Medical_Image_Processing.txt")
+			writer = BufferedWriter(fileWriter(f))
+			# Write stuff to file
+			writer.write(contents)
+			writer.close()
+		except IOException:
+			print "IO Exception"
 
 def validateUserInput(self, inputCategory, userInput, validInputs):
 	isValid = True
@@ -758,6 +772,7 @@ def getImagesBasedOnUserFileSpecications(self, images):
 
 	return imagesToReturn
 
+
 # Extends the WindowAdapter class: does this to overide the windowClosing method
 #	to create a custom close operation.
 # Creates a progress bar indicating what percentage of images have been processed
@@ -810,9 +825,7 @@ class MacroProgressMenu(WindowAdapter):
 	# Disposes of this progress menu
 	def disposeMenu(self):
 		self.macroMenuFrame.dispose()
-		
 
-	
 
 ###############################################################
 # Extends the class runnable to run on a seperate thread      #
@@ -823,7 +836,8 @@ class MacroProgressMenu(WindowAdapter):
 # Cannot get a new constuctor to work otherwise the set       #
 # 	methods would just be part of the constructor             #
 ###############################################################
-class macroRunner(Runnable):		
+class macroRunner(Runnable):
+		
 	# Overides the run method of the Runnable class
 	# Creates an instance of Interpreter to run the macro
 	# Runs the macro in the instance and calls process on
