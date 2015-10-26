@@ -329,55 +329,83 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\\\2IMAGENAME")', fileContents)
 			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\\\2NOEXTENSION\3")', fileContents)
 
-			# Split the macro by ; and add the text ;saveChanges(); inbetween each split to save any images changes that might have occured
-			# This calls the function saveChanges() defined in the macro
-			listOfLines = fileContents.split(";")
-			fileContents = ""
-			for line in listOfLines:
-				fileContents = fileContents + line + ";" + "saveChanges();"
-			
-			# Inserts in import function if the user did not use one
-			if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
-				importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
-							  'run("Stack to RGB");'
-							  'selectedImage = getImageID();'
-							  'for (i=0; i < nImages; i++){ '
-							  'selectImage(i+1);'
-							  'if(!(selectedImage == getImageID())){'
-							  'close();i = i - 1;}}'
-							  'selectImage(selectedImage);')
-				fileContents = importCode + fileContents
+			# Inserts code to save the images if no save commands are found in the original macro file
+			if fileContents.find("Bio-Formats Exporter") == -1 and fileContents.find("saveAs(") == -1 and fileContents.find('run("Save"') == -1:
+				# Split the macro by ; and add the text ;saveChanges(); inbetween each split to save any images changes that might have occured
+				# This calls the function saveChanges() defined in the macro
+				listOfLines = fileContents.split(";")
+				fileContents = ""
+				for line in listOfLines:
+					fileContents = fileContents + line + ";" + "saveChanges();"
+
+
+				# Inserts in import function if the user did not use one
+				if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
+					importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
+								  'run("Stack to RGB");'
+								  'selectedImage = getImageID();'
+								  'for (i=0; i < nImages; i++){ '
+								  'selectImage(i+1);'
+								  'if(!(selectedImage == getImageID())){'
+								  'close();i = i - 1;}}'
+								  'selectImage(selectedImage);'
+								  'rename(getInfo("image.filename"))')
+					fileContents = importCode + fileContents
+
+				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
+				functionToSave = ('function saveChanges(){'
+									# Checks if an image is open
+								  	'if(nImages != 0){'
+								  		# Store the id of the open image to reselect it once the process is over
+								  		'selectedImage = getImageID();'
+								  		'for (i=0; i < nImages; i++){ '
+								  			'selectImage(i+1);'
+								  			'title = replace(getTitle(), " ", "_");'
+								  			# If anything exists after the extension, move it to the front of the image name instead
+								  			'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
+								  				'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
+							  				'}'
+							  				# If file doesn't exist, save it
+								  			'if(File.exists("FILEPATH\\\\" + title) != 1){'
+								  				'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+								  				'setOption("Changes", false);'
+								  			'}'
+								  			# If changes have been made to the image, save it
+						      				'if(is("changes")){'
+						      					# Name without extension
+						      					'name = substring(title, 0, indexOf(title,"."));'
+						      					# Filename counter
+						      					'titleIteration = 0;'
+						      					# File extension
+						      					'ext = substring(title, indexOf(title, "."));'
+						      					# While the file exists, increment the counter to produce a different name
+						      					'while(File.exists("FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext) == 1){'
+						      						'titleIteration = titleIteration + 1;'
+						      					'}'
+						      					# Name of the file to export
+						      					'title = name + "(" + titleIteration + ")" + ext;'
+						      					'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+						      					# Rename the open window to the new file name
+						      					'rename(title);'
+						      					# Mark file has no changes
+						      					'setOption("Changes", false);'
+						      				'}'
+							      		'}'
+							      		# Select the image that was originally selected
+							      		'selectImage(selectedImage);'
+							      	'}'
+							      '}')
+				fileContents = functionToSave + fileContents
 				
 			# Inserts a save results function if a results window is open and the user did not save it
 			if fileContents.find('saveAs("Results"') == -1:
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\\\Results.csv\");}"
 
-			# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
-			functionToSave = ('function saveChanges(){'
-							  'if(nImages != 0){'
-							  'selectedImage = getImageID();'
-							  'for (i=0; i < nImages; i++){ '
-							  'selectImage(i+1);'
-							  'title = replace(getTitle(), " ", "_");'
-							  'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
-							  'title = substring(title, 0, indexOf(title, "_", indexOf(title, ".")));}'
-							  'if(!File.exists("[FILEPATH\\\\" + title + "]")){'
-							  'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
-							  '}'
-						      'if(is("changes")){'
-						      'name = substring(title, 0, indexOf(title, "."));'
-						      'titleIteration = 0;'
-						      'ext = substring(title, indexOf(title, "."));'
-						      'while(File.exists("[FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext + "]")){'
-						      'titleIteration = titleIteration + 1;'
-						      '}'
-						      'title = name + "(" + titleIteration + ")" + ext;'
-						      'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
-						      'setOption("Changes", false);'
-						      '}}selectImage(selectedImage);}}')
-			fileContents = functionToSave + fileContents
+			# Closes any open images
+			fileContents = fileContents + 'if(nImages != 0){for (i=0; i < nImages; i++){selectImage(i+1);close();i=i-1;}'
 
-			fileContents = fileContents + 'if(nImages != 0){for (i=0; i < nImages; i++){selectImage(i+1);close();}'
+			# Closes the results window if one opens
+			fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
 			
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
@@ -627,10 +655,7 @@ class ImageProcessorMenu:
 				fileContents = fileContents.replace("IMAGENAME", file.getName().replace("\\","\\\\"))
 				fileContents = fileContents.replace("NOEXTENSION", fileName.replace("\\","\\\\"))
 				fileContents = fileContents.replace('run("View Step")','waitForUser("Press ok to continue")')
-				#fileContents = fileContents.replace("\\","\\\\")
-
-				# Closes the results window if one opens
-				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
+				
 			except IOException:
 				print "IOException"
 
