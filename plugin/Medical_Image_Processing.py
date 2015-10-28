@@ -592,7 +592,7 @@ class ImageProcessorMenu:
 			self.selectedExtensions = self.selectedExtensions.split(", ")
 
 			#Validation routine to ensure selected file extensions are valid and comma seperated
-			if not (self.validateUserInput(self, self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
+			if not (self.validateUserInput(self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
 				return
 
 		#Get file name contains pattern
@@ -602,7 +602,7 @@ class ImageProcessorMenu:
 		self.macroFile = File(self.macroDirectory.getPath())
 
 		#Validation routine to ensure selected macro file is actually a macro file (file extension = '.ijm')
-		if not (self.validateUserInput(self, self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
+		if not (self.validateUserInput(self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
 			return
 
 		#Location of R Script
@@ -610,14 +610,14 @@ class ImageProcessorMenu:
 			rScript = File(self.rScriptDirectory.getPath())
 
 			#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
-			if not (self.validateUserInput(self, self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
+			if not (self.validateUserInput(self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
 				return
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
 
 		#Returns images as specified by the user and adds them to a list
-		listOfPicturesBasedOnUserSpecs = self.getImagesBasedOnUserFileSpecications(self, listOfPictures)
+		listOfPicturesBasedOnUserSpecs = self.getImagesBasedOnUserFileSpecications(listOfPictures)
 
 		# Save the array of images to the instance
 		self.pictures = listOfPicturesBasedOnUserSpecs
@@ -726,7 +726,7 @@ class ImageProcessorMenu:
 
 			#Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
-				self.copyOriginalImageToNewDirectory(self, fileName, outputDir)
+				self.copyOriginalImageToNewDirectory(fileName, outputDir)
 				log.write('Copied image to: ' + self.outputDirectory.getPath() + '\n')
 
 			#Append each processing operation to the log file
