@@ -350,15 +350,24 @@ class ImageProcessorMenu:
 
 				# Inserts in import function if the user did not use one
 				if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
+								  # Import the image using the bio-formats importer
 					importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
-									'run("Stack to RGB");'
-									'selectedImage = getImageID();'
-									'for (i=0; i < nImages; i++){ '
-									'selectImage(i+1);'
-									'if(!(selectedImage == getImageID())){'
-									'close();i = i - 1;}}'
-									'selectImage(selectedImage);'
-									'rename(getInfo("image.filename"))')
+								  # Merge the image into one channel, instead of three seperate red, green, and blue channels
+								  'run("Stack to RGB");'
+								  # Remember the id of the new image
+								  'selectedImage = getImageID();'
+								  # Close the seperate channel file
+								  'for (i=0; i < nImages; i++){ '
+								  	'selectImage(i+1);'
+								  	'if(!(selectedImage == getImageID())){'
+								  		'close();'
+								  		'i = i - 1;'
+								  	'}'
+								  '}'
+								  # Reselect the new image
+								  'selectImage(selectedImage);'
+								  # Rename window the file name (removes (RGB) from the end of the file window)
+								  'rename(getInfo("image.filename"))')
 					fileContents = importCode + fileContents
 
 				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
@@ -571,7 +580,6 @@ class ImageProcessorMenu:
 		self.validFileExtensions.append("")
 		#Get the user's selected delimiter
 		self.choice = self.delimeterComboBox.getSelectedItem()
-
 		#Get user's desired file extensions
 		#No need to get selected extensions if user wants all file types or has not specified any extensions
 		if (self.choice == "All File Types" or (self.extensionTextfield.getText() == "")):
@@ -903,7 +911,7 @@ class MacroProgressMenu(WindowAdapter):
 	def windowClosing(self, event):
 		# Prevents more macros from running	
 		self.ref.runner.run = False
-		# Stops currently ruuing macro
+		# Stops currently running macro
 		self.ref.runner.abortMacro()
 		# Shows the main menu
 		self.ref.frame.setVisible(True)
