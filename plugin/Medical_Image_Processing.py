@@ -570,7 +570,7 @@ class ImageProcessorMenu:
 		#Add blank string to list in case user does not specify file extensions
 		self.validFileExtensions.append("")
 		#Get the user's selected delimiter
-		self.choice = self.delimiterComboBox.getSelectedItem()
+		self.choice = self.delimeterComboBox.getSelectedItem()
 
 		#Get user's desired file extensions
 		#No need to get selected extensions if user wants all file types or has not specified any extensions
@@ -901,10 +901,10 @@ class MacroProgressMenu(WindowAdapter):
 	# Override
 	# Custom on close opperation
 	def windowClosing(self, event):
-	
+		# Prevents more macros from running	
+		self.ref.runner.run = False
 		# Stops currently ruuing macro
 		self.ref.runner.abortMacro()
-		
 		# Shows the main menu
 		self.ref.frame.setVisible(True)
 
@@ -932,9 +932,12 @@ class macroRunner(Runnable):
 	# Runs the macro in the instance and calls process on
 	#	the ImageProcessorMenu instance
 	def run(self):
+		self.run = True
 		self.inter = Interpreter()
 		self.inter.run(self.macroString)
-		self.ref.process()
+		# Prevents future macros from running if current macro was aborted
+		if self.run:
+			self.ref.process()
 
 	# Sets the macro file
 	# string, the macro file to be run
