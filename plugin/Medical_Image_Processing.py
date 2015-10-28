@@ -77,7 +77,6 @@ class DelimiterActionListener(ActionListener):
 #	They can then press start and it will perform the macro operation on all images found
 #	in the directory or in the text file. When finished the results will be fed into an R
 #	script for analyzing (need to implement)
-
 class ImageProcessorMenu:
 	# Closes the program
 	def onExit(self, event):
@@ -350,7 +349,7 @@ class ImageProcessorMenu:
 
 				# Inserts in import function if the user did not use one
 				if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
-								  # Import the image using the bio-formats importer
+					# Import the image using the bio-formats importer
 					importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
 								  # Merge the image into one channel, instead of three seperate red, green, and blue channels
 								  'run("Stack to RGB");'
@@ -368,6 +367,7 @@ class ImageProcessorMenu:
 								  'selectImage(selectedImage);'
 								  # Rename window the file name (removes (RGB) from the end of the file window)
 								  'rename(getInfo("image.filename"))')
+
 					fileContents = importCode + fileContents
 
 				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
@@ -414,7 +414,7 @@ class ImageProcessorMenu:
 									'}'
 								'}')
 				fileContents = functionToSave + fileContents
-				
+
 			# Inserts a save results function if a results window is open and the user did not save it
 			if fileContents.find('saveAs("Results"') == -1:
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\\\Results.csv\");}"
@@ -424,7 +424,7 @@ class ImageProcessorMenu:
 
 			# Closes the results window if one opens
 			fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
-			
+
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
 			if fileChooser.showSaveDialog(self.frame) == JFileChooser.APPROVE_OPTION:
@@ -580,6 +580,7 @@ class ImageProcessorMenu:
 		self.validFileExtensions.append("")
 		#Get the user's selected delimiter
 		self.choice = self.delimeterComboBox.getSelectedItem()
+
 		#Get user's desired file extensions
 		#No need to get selected extensions if user wants all file types or has not specified any extensions
 		if (self.choice == "All File Types" or (self.extensionTextfield.getText() == "")):
@@ -591,7 +592,7 @@ class ImageProcessorMenu:
 			self.selectedExtensions = self.selectedExtensions.split(", ")
 
 			#Validation routine to ensure selected file extensions are valid and comma seperated
-			if not (validateUserInput(self, self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
+			if not (self.validateUserInput(self, self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
 				return
 
 		#Get file name contains pattern
@@ -601,7 +602,7 @@ class ImageProcessorMenu:
 		self.macroFile = File(self.macroDirectory.getPath())
 
 		#Validation routine to ensure selected macro file is actually a macro file (file extension = '.ijm')
-		if not (validateUserInput(self, self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
+		if not (self.validateUserInput(self, self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
 			return
 
 		#Location of R Script
@@ -609,21 +610,21 @@ class ImageProcessorMenu:
 			rScript = File(self.rScriptDirectory.getPath())
 
 			#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
-			if not (validateUserInput(self, self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
+			if not (self.validateUserInput(self, self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
 				return
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
 
 		#Returns images as specified by the user and adds them to a list
-		listOfPicturesBasedOnUserSpecs = getImagesBasedOnUserFileSpecications(self, listOfPictures)
+		listOfPicturesBasedOnUserSpecs = self.getImagesBasedOnUserFileSpecications(self, listOfPictures)
 
 		# Save the array of images to the instance
 		self.pictures = listOfPicturesBasedOnUserSpecs
 
 		# Read in the macro file with a buffered reader
 		self.readInMacro()
-		
+
 		# Create an index indicating which image in the array is next to be processed
 		self.index = 0
 		self.process()
@@ -651,13 +652,13 @@ class ImageProcessorMenu:
 			# Create the progress menu and pass it a reference to the main menu
 			self.macroMenu = MacroProgressMenu()
 			self.macroMenu.setMenuReference(self)
-			
+
 		# Checks that there is another image to process
 		if self.index < len(self.pictures):
 
 			# Increase the progress bar's value
 			self.macroMenu.setProgressBarValue(int(((self.index + 1.0) / len(self.pictures)) * 100))
-			
+
 			# Image to process
 			file = self.pictures[self.index]
 
@@ -679,7 +680,7 @@ class ImageProcessorMenu:
 			else:
 				outputDir = File(self.urlLocation.getPath() + "/" + fileName)
 				selectedDir = self.urlLocation.getPath() + "/Log.txt"
-			
+
 			print self.outputDirectory.getPath()
 			print outputDir
 			outputDir.mkdir()
@@ -693,7 +694,7 @@ class ImageProcessorMenu:
 			try:
 				# Copy the macro string to be modified, leaving the original
 				fileContents = self.macroString
-					
+
 				# Replace all the generalized strings with specifics
 				fileContents = fileContents.replace("INPUTPATH", file.getPath().replace("\\","\\\\"))
 				fileContents = fileContents.replace("FILEPATH", outputDir.getPath().replace("\\","\\\\"))
@@ -725,7 +726,7 @@ class ImageProcessorMenu:
 
 			#Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
-				copyOriginalImageToNewDirectory(self, fileName, outputDir)
+				self.copyOriginalImageToNewDirectory(self, fileName, outputDir)
 				log.write('Copied image to: ' + self.outputDirectory.getPath() + '\n')
 
 			#Append each processing operation to the log file
@@ -747,9 +748,9 @@ class ImageProcessorMenu:
 	# Searches for the R.exe file on the users system to give pyper the path to it
 	# Creates a file chooser to allow the user to specificy in which directory
 	#	and thus sub directories to look for it in. Allows the seach to happen
-	# 	faster if the user knows where to look, or lets user with no knowledge 
+	# 	faster if the user knows where to look, or lets user with no knowledge
 	# 	of file systems find the file by specifiying the root of the drive
-	# Saves the path in the Medical_Image_Processing.txt file in the 
+	# Saves the path in the Medical_Image_Processing.txt file in the
 	# 	Medical_Image folder found in the fiji plugins directory
 	def rSearch(self):
 		# File to search for
@@ -778,7 +779,7 @@ class ImageProcessorMenu:
 						# Create the contents of the file
 						# rPath: Path to R.exe on the users system
 						# inputPath: Last used input directory path
-						# outputPath: Last used output directory path 
+						# outputPath: Last used output directory path
 						# macroPath: Last used macro file path
 						# rScriptPath: Last used r script file path
 						contents = "rPath\t" + found + "\r\n"
@@ -814,60 +815,59 @@ class ImageProcessorMenu:
 		except IOException:
 			print "IO Exception"
 
-def validateUserInput(self, inputCategory, userInput, validInputs):
-	isValid = True
-	errorTitle = ""
-	errorMessage = ""
+	def validateUserInput(self, inputCategory, userInput, validInputs):
+		isValid = True
+		errorTitle = ""
+		errorMessage = ""
 
-	for ext in userInput:
-		if not (ext in validInputs):
-			isValid = False
+		for ext in userInput:
+			if not (ext in validInputs):
+				isValid = False
 
-	if not(isValid):
-		self.frameToDispose = GenericDialog("")
-		if (inputCategory == "Extensions"):
-			errorTitle = "ERROR - Invalid File Extension Format(s)"
-			errorMessage = "Error: One or More of Your Selected File Extensions is Invalid. \n  Ensure All Selected File Extensions Are Valid and Seperated by Commas."
-		elif (inputCategory == "Macro File"):
-			errorTitle = "ERROR - Invalid Macro File"
-			errorMessage = "Error: You Have Selected an Invalid Macro File.  Please Ensure Your Selected File Ends With '.ijm'."
+		if not(isValid):
+			self.frameToDispose = GenericDialog("")
+			if (inputCategory == "Extensions"):
+				errorTitle = "ERROR - Invalid File Extension Format(s)"
+				errorMessage = "Error: One or More of Your Selected File Extensions is Invalid. \n  Ensure All Selected File Extensions Are Valid and Seperated by Commas."
+			elif (inputCategory == "Macro File"):
+				errorTitle = "ERROR - Invalid Macro File"
+				errorMessage = "Error: You Have Selected an Invalid Macro File.  Please Ensure Your Selected File Ends With '.ijm'."
 
-		self.frameToDispose.setTitle(errorTitle)
-		self.frameToDispose.addMessage(errorMessage)
-		self.frameToDispose.showDialog()
+			self.frameToDispose.setTitle(errorTitle)
+			self.frameToDispose.addMessage(errorMessage)
+			self.frameToDispose.showDialog()
 
-	return isValid
+		return isValid
 
-#Copies the original image from the existing directory to the newly created one
-def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
-	img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave)
-	IJ.save(img, outputDir.getPath())
-	img.close()
+	#Copies the original image from the existing directory to the newly created one
+	def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
+		img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave)
+		IJ.save(img, outputDir.getPath())
+		img.close()
 
-#Gets values from file specification components within the JPanel and returns images based on user's specifications
-def getImagesBasedOnUserFileSpecications(self, images):
-	imagesToReturn = []
-	for file in images:
-		fileName = file.getName()
-		#Check for file extensions
-		if (fileName[-4:].lower() in self.selectedExtensions):
-			if ((self.choice == "Include" or self.choice == "All File Types") or (self.choice == "Exclude" and self.selectedExtensions == self.validFileExtensions)):
-				if not (self.containString == ""):
-					if (self.containString in fileName):
+	#Gets values from file specification components within the JPanel and returns images based on user's specifications
+	def getImagesBasedOnUserFileSpecications(self, images):
+		imagesToReturn = []
+		for file in images:
+			fileName = file.getName()
+			#Check for file extensions
+			if (fileName[-4:].lower() in self.selectedExtensions):
+				if ((self.choice == "Include" or self.choice == "All File Types") or (self.choice == "Exclude" and self.selectedExtensions == self.validFileExtensions)):
+					if not (self.containString == ""):
+						if (self.containString in fileName):
+							imagesToReturn.append(file)
+					else:
 						imagesToReturn.append(file)
-				else:
-					imagesToReturn.append(file)
-		if not (fileName[-4:].lower() in self.selectedExtensions):
-			if (self.choice == "Exclude" and fileName[-4:].lower() in self.validFileExtensions):
-				if not (self.containString == ""):
-					#Check for file name pattern
-					if (self.containString in fileName):
+			if not (fileName[-4:].lower() in self.selectedExtensions):
+				if (self.choice == "Exclude" and fileName[-4:].lower() in self.validFileExtensions):
+					if not (self.containString == ""):
+						#Check for file name pattern
+						if (self.containString in fileName):
+							imagesToReturn.append(file)
+					#No file name pattern specified
+					else:
 						imagesToReturn.append(file)
-				#No file name pattern specified
-				else:
-					imagesToReturn.append(file)
-
-	return imagesToReturn
+		return imagesToReturn
 
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
@@ -880,7 +880,7 @@ class MacroProgressMenu(WindowAdapter):
 		self.macroMenuFrame = JFrame("Processing Images...")
 		self.macroMenuFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE)
 		self.macroMenuFrame.addWindowListener(self)
-		
+
 		content = self.macroMenuFrame.getContentPane()
 
 		# Create the progess bar
@@ -896,7 +896,7 @@ class MacroProgressMenu(WindowAdapter):
 		# Set size and show frame
 		self.macroMenuFrame.setSize(300, 100)
 		self.macroMenuFrame.setVisible(True)
-		
+
 	# Sets a reference to the main menu
 	# Would put in constructor, but cannot get variables to be passed in that way
 	def setMenuReference(self, ref):
@@ -911,7 +911,7 @@ class MacroProgressMenu(WindowAdapter):
 	def windowClosing(self, event):
 		# Prevents more macros from running	
 		self.ref.runner.run = False
-		# Stops currently running macro
+		# Stops currently ruuing macro
 		self.ref.runner.abortMacro()
 		# Shows the main menu
 		self.ref.frame.setVisible(True)
@@ -934,7 +934,6 @@ class MacroProgressMenu(WindowAdapter):
 # 	methods would just be part of the constructor             #
 ###############################################################
 class macroRunner(Runnable):
-		
 	# Overides the run method of the Runnable class
 	# Creates an instance of Interpreter to run the macro
 	# Runs the macro in the instance and calls process on
