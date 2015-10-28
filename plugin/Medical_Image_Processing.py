@@ -570,6 +570,7 @@ class ImageProcessorMenu:
 	def runRScript(self, scriptFilename):
 		if not self.rcommand:
 			self.rcommand = "Rscript"
+		# TODO: fix 'str has no attribute format' error in fiji
 		os.system("{!s} {!s}".format(self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
@@ -793,6 +794,7 @@ class ImageProcessorMenu:
 						print "IO Exception"
 					break
 
+	### The following two methods are intended to replace rSearch().
 	# Looks for RScript.exe
 	def rScriptSearch(self):
 		chooseFile = JFileChooser()
