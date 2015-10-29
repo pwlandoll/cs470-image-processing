@@ -1,6 +1,9 @@
 # Image Processing in Fiji
 Project for John Carroll University CS470 Fall 2015
 
+## For 30-10-2015 Code Walkthrough
+We'll be walking through two files: `plugin/Medical_Image_Processing.py` (our main plugin file) and `plugin/RScript_MIP` (some sample work done in R).
+
 ## Purpose
 The goal of the software is to perform post-processing and statistical analysis on a set of images. Any number of images can be opened and sent through an arbitrary pipeline of processes. After processing, the results will be passed on to statistical software that will provide a final output from the images. 
 
