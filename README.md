@@ -17,6 +17,12 @@ The goal of the software is to perform post-processing and statistical analysis 
 2. **Get the Code:** Either clone the repository, or download the plugin folder.
 3. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install PlugIn...`, and select `Medical_Image_Processing.py`. 
 
+## Usage Instructions
+### Macros
+This plugin allows a user to define Fiji macros (`.ijm` files) and generalizes them to apply to a large collection of files. A sample macro file is included.
+### R Script
+The plugin asks for an R script to be run after processing images. A template R script is included to demonstrate how to open the resulting data. A sample R script is also included. 
+
 ## Other Notes
 ### Final .zip File
 The final product will be delivered as a .zip file that will contain:
