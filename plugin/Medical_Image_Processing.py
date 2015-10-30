@@ -571,7 +571,8 @@ class ImageProcessorMenu:
 		if not self.rcommand:
 			self.rcommand = "Rscript"
 		# TODO: fix 'str has no attribute format' error in fiji
-		os.system("{!s} {!s}".format(self.rcommand, scriptFilename))
+		# Commenting this out to stop the error message on Windows
+		# os.system("{!s} {!s}".format(self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
