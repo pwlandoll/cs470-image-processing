@@ -84,8 +84,9 @@ class ImageProcessorMenu:
 
 	# Constructor
 	def __init__(self):
-		#String of accepted file types for use throughout application
-		self.validFileExtensionsString = ".jpg, .png, .tif"
+		# String of accepted file types for use throughout application
+		# TODO: Update the list of valid image types
+		self.validFileExtensionsString = ".jpg, .png, .tif, .dcm, .gif"
 
 		# Create the menu frame with size of 450x400
 		frameWidth, frameHeight = 450, 400
@@ -351,27 +352,38 @@ class ImageProcessorMenu:
 				if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
 					# Import the image using the bio-formats importer
 					importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
-								  # Merge the image into one channel, instead of three seperate red, green, and blue channels
-								  'run("Stack to RGB");'
-								  # Remember the id of the new image
-								  'selectedImage = getImageID();'
-								  # Close the seperate channel file
-								  'for (i=0; i < nImages; i++){ '
-								  	'selectImage(i+1);'
-								  	'if(!(selectedImage == getImageID())){'
-								  		'close();'
-								  		'i = i - 1;'
-								  	'}'
-								  '}'
-								  # Reselect the new image
-								  'selectImage(selectedImage);'
-								  # Rename window the file name (removes (RGB) from the end of the file window)
-								  'rename(getInfo("image.filename"))')
+								  'if(is("composite") == 1){'
+								  	  # Merge the image into one channel, instead of three seperate red, green, and blue channels
+									  'run("Stack to RGB");'
+									  # Remember the id of the new image
+									  'selectedImage = getImageID();'
+									  # Close the seperate channel file
+									  'for (i=0; i < nImages; i++){ '
+									  	'selectImage(i+1);'
+									  	'if(!(selectedImage == getImageID())){'
+									  		'close();'
+									  		'i = i - 1;'
+									  	'}'
+									  '}'
+									  # Reselect the new image
+									  'selectImage(selectedImage);'
+									  # Rename window the file name (removes (RGB) from the end of the file window)
+									  'rename(getInfo("image.filename"))'
+								  '}')
 
 					fileContents = importCode + fileContents
 
 				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
-				functionToSave = ('function saveChanges(){'
+				functionToSave = ('function getSaveName(image){'
+									'name = substring(image, 0, indexOf(image,"."));'
+									'ext = substring(image, 0, indexOf(image,"."));'
+									'validExts = ".jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz";'
+									'if(indexOf(validExts, ext) == -1){'
+										'image = name + ".tif";'
+									'}'
+									'return image;'
+								  '}'
+								  'function saveChanges(){'
 									# Checks if an image is open
 									'if(nImages != 0){'
 										# Store the id of the open image to reselect it once the process is over
@@ -383,6 +395,7 @@ class ImageProcessorMenu:
 											'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
 												'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
 											'}'
+											'title = getSaveName(title);'
 											# If file doesn't exist, save it
 											'if(File.exists("FILEPATH\\\\" + title) != 1){'
 												'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
@@ -616,7 +629,7 @@ class ImageProcessorMenu:
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
-
+		
 		#Returns images as specified by the user and adds them to a list
 		listOfPicturesBasedOnUserSpecs = self.getImagesBasedOnUserFileSpecications(listOfPictures)
 
@@ -630,6 +643,7 @@ class ImageProcessorMenu:
 		self.index = 0
 		self.process()
 
+		
 	#Reads in the macro file and stores it as a string to be modified during process
 	def readInMacro(self):
 		fileContents = ""
@@ -656,7 +670,6 @@ class ImageProcessorMenu:
 
 		# Checks that there is another image to process
 		if self.index < len(self.pictures):
-
 			# Increase the progress bar's value
 			self.macroMenu.setProgressBarValue(int(((self.index + 1.0) / len(self.pictures)) * 100))
 
