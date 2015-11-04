@@ -377,27 +377,48 @@ class ImageProcessorMenu:
 
 					fileContents = importCode + fileContents
 
-				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
+								  # Checks if image is has a valid extension, if not, replace it with .tif
 				functionToSave = ('function getSaveName(image){'
+									# Name of the file
 									'name = substring(image, 0, indexOf(image,"."));'
+									# Extension
 									'ext = substring(image, indexOf(image,"."));'
+									# Extensions supported by Bio-Formats-Exporter
 									'validExts = ".jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz";'
+									# Checks if ext is in validExts
 									'if(indexOf(validExts, ext) == -1){'
 										'image = name + ".tif";'
 									'}'
+									# Return same string passed in, or same name with .tif extension
 									'return image;'
 								  '}'
+								  # Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
 								  'function saveChanges(command){'
 									# Checks if an image is open
 									'if(nImages != 0){'
 										# Store the id of the open image to reselect it once the process is over
 										'selectedImage = getImageID();'
-										'if(List.get(selectedImage) == ""){'
-											'List.set(selectedImage,getTitle());'
-										'}'
 										'for (i=0; i < nImages; i++){ '
 											'selectImage(i+1);'
-											'title = replace(List.get(selectedImage), " ", "_");'
+											# Get the id of the image
+											'imageID = getImageID();'
+											# Checks if the imageID exists in the list, if not we need to create an entry for it
+											# List uses key,value pairs, in this use case, the key is the imageID, the value is the imageName
+											'if(List.get(imageID) == ""){'
+												# If there was no previous image set the name of the file to its window title
+												'if(List.get("previousImage") == ""){'
+													'List.set(imageID,getTitle());'
+												'}'
+												# Otherwise make it its window title stripped of the extension, followed by the name of the previous image
+												'else{'
+													'title = replace(getTitle(), " ", "_");'
+													'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
+														'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
+													'}'
+													'List.set(imageID, substring(title,0,indexOf(title,".")) + "_" + List.get(List.get("previousImage")));'
+												'}'
+											'}'
+											'title = replace(List.get(imageID), " ", "_");'
 											# If anything exists after the extension, move it to the front of the image name instead
 											'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
 												'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
@@ -429,18 +450,20 @@ class ImageProcessorMenu:
 												'else{'
 													'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
 												'}'
-												# Rename the open window to the new file name
-												'List.set(selectedImage, title);'
+												# Change the name of the image in the List
+												'List.set(imageID, title);'
 												# Mark file has no changes
 												'setOption("Changes", false);'
 											'}'
 										'}'
 										# Select the image that was originally selected
 										'selectImage(selectedImage);'
+										# Set the previous image to the selectedImage id
+										'List.set("previousImage", selectedImage);'
 									'}'
 								'}')
 				fileContents = functionToSave + fileContents
-
+				
 			# Inserts a save results function if a results window is open and the user did not save it
 			if fileContents.find('saveAs("Results"') == -1:
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\\\Results.csv\");}"
