@@ -576,6 +576,7 @@ class ImageProcessorMenu:
 	def readURLList(self, filename):
 		f, images = open(filename, 'r'), []
 		for line in f:
+			# TODO: Add some verification of the URL
 			images.append(IJ.openImage(line))
 		f.close()
 		return images
@@ -583,8 +584,7 @@ class ImageProcessorMenu:
 	def runRScript(self, scriptFilename):
 		if not self.rcommand:
 			self.rcommand = "Rscript"
-		# TODO: fix 'str has no attribute format' error in fiji
-		os.system("{!s} {!s}".format(self.rcommand, scriptFilename))
+		os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
