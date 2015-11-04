@@ -392,6 +392,15 @@ class ImageProcessorMenu:
 									# Return same string passed in, or same name with .tif extension
 									'return image;'
 								  '}'
+								  # Need to do it for each row
+								  'function saveResults(){'
+									'if (isOpen("Results")) {'
+										'setResult("Image Name", 0, List.get(getImageID()));'
+										'selectWindow("Results");'
+										'saveAs("Results", "FILEPATH\\\\" + List.get(getImageID()) +".csv");'
+										'run("Close");'
+									'}'
+								  '}'
 								  # Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
 								  'function saveChanges(command){'
 									# Checks if an image is open
@@ -456,6 +465,8 @@ class ImageProcessorMenu:
 												'setOption("Changes", false);'
 											'}'
 										'}'
+										# Save the results windows if its open
+										'saveResults();'
 										# Select the image that was originally selected
 										'selectImage(selectedImage);'
 										# Set the previous image to the selectedImage id
