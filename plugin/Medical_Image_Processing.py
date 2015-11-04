@@ -345,7 +345,11 @@ class ImageProcessorMenu:
 				listOfLines = fileContents.split(";")
 				fileContents = ""
 				for line in listOfLines:
-					fileContents = fileContents + line + ";" + "saveChanges();"
+					if re.match("run.*",line):
+						command = re.sub(r'run\("([^"]*)"[^\)]*\)', r'\1',line).replace(".","").replace(" ","_")
+					else:
+						command = "unknown"
+					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");"
 
 
 				# Inserts in import function if the user did not use one
@@ -368,7 +372,7 @@ class ImageProcessorMenu:
 									  # Reselect the new image
 									  'selectImage(selectedImage);'
 									  # Rename window the file name (removes (RGB) from the end of the file window)
-									  'rename(getInfo("image.filename"))'
+									  'rename(getInfo("image.filename"));'
 								  '}')
 
 					fileContents = importCode + fileContents
@@ -376,21 +380,24 @@ class ImageProcessorMenu:
 				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
 				functionToSave = ('function getSaveName(image){'
 									'name = substring(image, 0, indexOf(image,"."));'
-									'ext = substring(image, 0, indexOf(image,"."));'
+									'ext = substring(image, indexOf(image,"."));'
 									'validExts = ".jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz";'
 									'if(indexOf(validExts, ext) == -1){'
 										'image = name + ".tif";'
 									'}'
 									'return image;'
 								  '}'
-								  'function saveChanges(){'
+								  'function saveChanges(command){'
 									# Checks if an image is open
 									'if(nImages != 0){'
 										# Store the id of the open image to reselect it once the process is over
 										'selectedImage = getImageID();'
+										'if(List.get(selectedImage) == ""){'
+											'List.set(selectedImage,getTitle());'
+										'}'
 										'for (i=0; i < nImages; i++){ '
 											'selectImage(i+1);'
-											'title = replace(getTitle(), " ", "_");'
+											'title = replace(List.get(selectedImage), " ", "_");'
 											# If anything exists after the extension, move it to the front of the image name instead
 											'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
 												'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
@@ -403,21 +410,27 @@ class ImageProcessorMenu:
 											'}'
 											# If changes have been made to the image, save it
 											'if(is("changes")){'
-												# Name without extension
-												'name = substring(title, 0, indexOf(title,"."));'
-												# Filename counter
-												'titleIteration = 0;'
-												# File extension
-												'ext = substring(title, indexOf(title, "."));'
-												# While the file exists, increment the counter to produce a different name
-												'while(File.exists("FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext) == 1){'
-													'titleIteration = titleIteration + 1;'
+												'title = command + "_" + title;'
+												'if(File.exists("FILEPATH\\\\" + title) == 1){'
+													# Name without extension
+													'name = substring(title, 0, indexOf(title,"."));'
+													# Filename counter
+													'titleIteration = 0;'
+													# File extension
+													'ext = substring(title, indexOf(title, "."));'
+													# While the file exists, increment the counter to produce a different name
+													'while(File.exists("FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext) == 1){'
+														'titleIteration = titleIteration + 1;'
+													'}'
+													# Name of the file to export
+													'title = name + "(" + titleIteration + ")" + ext;'
+													'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
 												'}'
-												# Name of the file to export
-												'title = name + "(" + titleIteration + ")" + ext;'
-												'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+												'else{'
+													'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+												'}'
 												# Rename the open window to the new file name
-												'rename(title);'
+												'List.set(selectedImage, title);'
 												# Mark file has no changes
 												'setOption("Changes", false);'
 											'}'
