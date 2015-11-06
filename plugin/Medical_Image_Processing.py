@@ -224,7 +224,11 @@ class ImageProcessorMenu:
 		# Create the file to house the path
 		file = File(pluginDir + "\Medical_Image_Processing.txt")
 		if not file.exists():
-			JOptionPane.showMessageDialog(self.frame, "No R path detected. You will be asked to select a directory\nIf you know the directory where R.exe is located select it.\n Otherwise, select your root directory (ie. C:/ or /root/)")
+			message = "No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\
+						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\
+						On OS X, Rscript is usually found in /usr/local/bin/.\
+						On Linux, Rscript is usually found in /usr/bin."
+			JOptionPane.showMessageDialog(self.frame, message)
 			self.rScriptSearch()
 
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
@@ -550,11 +554,11 @@ class ImageProcessorMenu:
 		self.setDirectory("Output")
 
 	#Sets the macro file directory
-	def setMacroFileDirectory(self,event):
+	def setMacroFileDirectory(self, event):
 		self.setDirectory("Macro File")
 
 	#Sets the R script directory
-	def setRScriptDirectory(self,event):
+	def setRScriptDirectory(self, event):
 		self.setDirectory("R Script")
 
 	# Creates a filechooser for the user to select a directory for input or output
@@ -862,17 +866,28 @@ class ImageProcessorMenu:
 					break
 
 	### The following two methods are intended to replace rSearch().
-	# Looks for RScript.exe
+	# Looks for RScript command
 	def rScriptSearch(self):
-		chooseFile = JFileChooser()
-		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-		# TODO: Verify that the selected file is Rscript
-		if chooseFile.showDialog(self.frame, "Select") is not None:
-			self.rcommand = chooseFile.getSelectedFile()
-		#JOptionPane.showMessageDialog(self.frame, self.rcommand)
-		#self.saveToFile()
+		# First, try known locations for OS X, Linux, and Windows
+		osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
+		if os.path.exists(osxdir):
+			self.rcommand = osxdir
+		elif os.path.exists(linuxdir):
+			self.rcommand = linuxdir
+		elif os.path.exists(windowsdir):
+			self.rcommand = next(os.walk(windowsdir))[1][-1]
+		# If none of those work
+		if not self.rcommand:
+			chooseFile = JFileChooser()
+			chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+			# TODO: Verify that the selected file is Rscript
+			if chooseFile.showDialog(self.frame, "Select") is not None:
+				self.rcommand = chooseFile.getSelectedFile()
+			#JOptionPane.showMessageDialog(self.frame, self.rcommand)
+			#self.saveToFile()
 
 	# Funtion to open the text file where data is saved
+	# TODO: replace with better method
 	def saveToFile(self):
 		try:
 			pluginDir = IJ.getDir("plugins") + "/Medical_Image"
