@@ -392,12 +392,19 @@ class ImageProcessorMenu:
 									# Return same string passed in, or same name with .tif extension
 									'return image;'
 								  '}'
-								  # Need to do it for each row
+								  # Creates the column name in the results window and adds the imageName to each record
 								  'function saveResults(){'
+								    # Checks if a results window is open	
 									'if (isOpen("Results")) {'
-										'setResult("Image Name", 0, List.get(getImageID()));'
+										# Loop for every record in the results window
+										'for(i=0;i<getValue("results.count");i++){'
+											# Add the imagename to the record
+											'setResult("Image Name", i, List.get(getImageID()));'
+										'}'
 										'selectWindow("Results");'
-										'saveAs("Results", "FILEPATH\\\\" + List.get(getImageID()) +".csv");'
+										# Strip the extension from the file name and save the results as the imagename.csv
+										'saveAs("Results", "FILEPATH\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+										# Close the results window
 										'run("Close");'
 									'}'
 								  '}'
