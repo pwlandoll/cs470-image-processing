@@ -9,13 +9,12 @@ The goal of the software is to perform post-processing and statistical analysis 
 	* Fiji (Fiji Is Just ImageJ)
 		* [Download here](http://fiji.sc/Downloads#Fiji)
 		* Requires [Java](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)
+		* After installation, run the updater and install updates when prompted.
 	* R
 		* Required for statistical analysis
 		* To download, click [here](https://cran.r-project.org/mirrors.html) and select a mirror site.
-		* NOTE: Windows requires R to be added to the PATH; `C:\Program Files\R\R-X.X.X\bin\x64` for 64-bit systems, `C:\Program Files\R\R-X.X.X\bin\i386` for 32-bit.
-			* This requirement will be changed in the near future.
 2. **Get the Code:** Either clone the repository, or download the plugin folder.
-3. **Install Plugin Files:** From Fiji's `Plugins` menu, select `Install PlugIn...`, and select `Medical_Image_Processing.py`. 
+3. **Install Plugin File:** From Fiji's `Plugins` menu, select `Install PlugIn...`, and select `Medical_Image_Processing.py`.
 
 ## Usage Instructions
 ### Macros
