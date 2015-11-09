@@ -192,7 +192,6 @@ class ImageProcessorMenu:
 		self.startButton = JButton('Start', actionPerformed=self.start)
 		self.startButton.setEnabled(False)
 		self.startButton.setPreferredSize(Dimension(150,40))
-	
 		pnl.add(self.startButton)
 
 		# Add a menu to the frame
@@ -209,6 +208,7 @@ class ImageProcessorMenu:
 		createGeneralMacro.setToolTipText("Create a macro file that can be used in the processing pipeline using an existings macro file")
 		file.add(createGeneralMacro)
 
+		#Create menu option to change the path to RScript.exe
 		changeRPath = JMenuItem("Change R Path", None, actionPerformed=self.changeRPath)
 		changeRPath.setToolTipText("Specify The Location of RScript.exe (Contained in the R Installation Directory by Default)")
 		file.add(changeRPath)
@@ -223,27 +223,39 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
-		self.checkIfPathSet()
 		self.prepopulateDirectories()
-		self.shouldEnableStart()
+		self.setRPath()
 
-	def checkIfPathSet(self):
-		#Boolean representing if path is set
-		pathIsSet = True
-		
-		#Get user path file
-		paths = self.getUserPathFile()
-		
-		#User has not selected path to RScript.exe, prompt them to locate it
-		if (len(paths) > 1):
-			if (paths[1] == ""): #paths[1] corresponds to the R Script path
-				pathIsSet = False
-		else:
-			pathIsSet = False
-
-		if not(pathIsSet):
-			JOptionPane.showMessageDialog(self.frame, "No R path detected. You will be asked to select a directory\nIf you know the directory where R.exe is located select it.\n Otherwise, select your root directory (ie. C:/ or /root/)")
-			self.rScriptSearch(True)			
+	def setRPath(self):
+		# TODO: Replace with new text file storage method
+		# 	In general: Try to read in the path from the text file
+		# 	If that comes up with nothing or the file doesn't exist, proceed
+		pluginDir = IJ.getDir("plugins") + "\Medical_Image"
+		# Create the file to house the path
+		file = File(pluginDir + "\Medical_Image_Processing.txt")
+		if not file.exists():
+			message = "No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\
+						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\
+						On OS X, Rscript is usually found in /usr/local/bin/.\
+						On Linux, Rscript is usually found in /usr/bin."
+			JOptionPane.showMessageDialog(self.frame, message)
+			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
+			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
+			if os.path.exists(osxdir):
+				self.rcommand = osxdir
+			elif os.path.exists(linuxdir):
+				self.rcommand = linuxdir
+			elif os.path.exists(windowsdir):
+				self.rcommand = next(os.walk(windowsdir))[1][-1]
+			# If none of those work
+			if not self.rcommand:
+				chooseFile = JFileChooser()
+				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+				# TODO: Verify that the selected file is Rscript
+				if chooseFile.showDialog(self.frame, "Select") is not None:
+					self.rcommand = chooseFile.getSelectedFile()
+				#JOptionPane.showMessageDialog(self.frame, self.rcommand)
+				#self.saveToFile()
 
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
@@ -395,27 +407,64 @@ class ImageProcessorMenu:
 
 					fileContents = importCode + fileContents
 
-				# Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
+								  # Checks if image is has a valid extension, if not, replace it with .tif
 				functionToSave = ('function getSaveName(image){'
+									# Name of the file
 									'name = substring(image, 0, indexOf(image,"."));'
+									# Extension
 									'ext = substring(image, indexOf(image,"."));'
+									# Extensions supported by Bio-Formats-Exporter
 									'validExts = ".jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz";'
+									# Checks if ext is in validExts
 									'if(indexOf(validExts, ext) == -1){'
 										'image = name + ".tif";'
 									'}'
+									# Return same string passed in, or same name with .tif extension
 									'return image;'
 								  '}'
+								  # Creates the column name in the results window and adds the imageName to each record
+								  'function saveResults(){'
+								    # Checks if a results window is open	
+									'if (isOpen("Results")) {'
+										# Loop for every record in the results window
+										'for(i=0;i<getValue("results.count");i++){'
+											# Add the imagename to the record
+											'setResult("Image Name", i, List.get(getImageID()));'
+										'}'
+										'selectWindow("Results");'
+										# Strip the extension from the file name and save the results as the imagename.csv
+										'saveAs("Results", "FILEPATH\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+										# Close the results window
+										'run("Close");'
+									'}'
+								  '}'
+								  # Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
 								  'function saveChanges(command){'
 									# Checks if an image is open
 									'if(nImages != 0){'
 										# Store the id of the open image to reselect it once the process is over
 										'selectedImage = getImageID();'
-										'if(List.get(selectedImage) == ""){'
-											'List.set(selectedImage,getTitle());'
-										'}'
 										'for (i=0; i < nImages; i++){ '
 											'selectImage(i+1);'
-											'title = replace(List.get(selectedImage), " ", "_");'
+											# Get the id of the image
+											'imageID = getImageID();'
+											# Checks if the imageID exists in the list, if not we need to create an entry for it
+											# List uses key,value pairs, in this use case, the key is the imageID, the value is the imageName
+											'if(List.get(imageID) == ""){'
+												# If there was no previous image set the name of the file to its window title
+												'if(List.get("previousImage") == ""){'
+													'List.set(imageID,getTitle());'
+												'}'
+												# Otherwise make it its window title stripped of the extension, followed by the name of the previous image
+												'else{'
+													'title = replace(getTitle(), " ", "_");'
+													'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
+														'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
+													'}'
+													'List.set(imageID, substring(title,0,indexOf(title,".")) + "_" + List.get(List.get("previousImage")));'
+												'}'
+											'}'
+											'title = replace(List.get(imageID), " ", "_");'
 											# If anything exists after the extension, move it to the front of the image name instead
 											'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
 												'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
@@ -447,18 +496,22 @@ class ImageProcessorMenu:
 												'else{'
 													'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
 												'}'
-												# Rename the open window to the new file name
-												'List.set(selectedImage, title);'
+												# Change the name of the image in the List
+												'List.set(imageID, title);'
 												# Mark file has no changes
 												'setOption("Changes", false);'
 											'}'
 										'}'
+										# Save the results windows if its open
+										'saveResults();'
 										# Select the image that was originally selected
 										'selectImage(selectedImage);'
+										# Set the previous image to the selectedImage id
+										'List.set("previousImage", selectedImage);'
 									'}'
 								'}')
 				fileContents = functionToSave + fileContents
-
+				
 			# Inserts a save results function if a results window is open and the user did not save it
 			if fileContents.find('saveAs("Results"') == -1:
 				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\\\Results.csv\");}"
@@ -537,7 +590,10 @@ class ImageProcessorMenu:
 	#Sets the R Path (RScript.exe) directory
 	def setRPathDirectory(self,event):
 		self.setDirectory("R Path", None)
-	
+
+	#Action listener for Change R Path menu option
+	def changeRPath(self, event):
+		self.rScriptSearch(True)
 
 	# Creates a filechooser for the user to select a directory for input or output
 	# @param directoryType	Determines whether or not to be used to locate the input, output, macro file, or R script directory
@@ -611,7 +667,6 @@ class ImageProcessorMenu:
 			
 			self.shouldEnableStart()
 
-
 	def shouldEnableStart(self):
 		# Enable the start button if both an input and output have been selected
 		try:
@@ -647,6 +702,7 @@ class ImageProcessorMenu:
 	def readURLList(self, filename):
 		f, images = open(filename, 'r'), []
 		for line in f:
+			# TODO: Add some verification of the URL
 			images.append(IJ.openImage(line))
 		f.close()
 		return images
@@ -654,8 +710,7 @@ class ImageProcessorMenu:
 	def runRScript(self, scriptFilename):
 		if not self.rcommand:
 			self.rcommand = "Rscript"
-		# TODO: fix 'str has no attribute format' error in fiji
-		os.system("{!s} {!s}".format(self.rcommand, scriptFilename))
+		os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -806,7 +861,6 @@ class ImageProcessorMenu:
 			#Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				self.copyOriginalImageToNewDirectory(file, outputDir)
-				#log.write('Copied image to: ' + self.outputDirectory.getPath() + '\n')
 
 			#Creates a log file (or appends to it if one already exists) which will record processing procedures and other pertinent information
 			self.createLogFile(file, logFileDir, outputDir, fileContents)
@@ -846,7 +900,7 @@ class ImageProcessorMenu:
 						pluginDir = IJ.getDir("plugins") + "\Medical_Image"
 
 						# Create the file to house the path
-						file = File(pluginDir + "\user_paths.txt")
+						file = File(pluginDir + "\Medical_Image_Processing.txt")
 						writer = BufferedWriter(FileWriter(file))
 
 						# Create the contents of the file
@@ -866,30 +920,8 @@ class ImageProcessorMenu:
 						print "IO Exception"
 					break
 
-	### The following two methods are intended to replace rSearch().
-	# Looks for RScript.exe
-	def rScriptSearch(self, changePath):
-		
-		#Only need to show file browser if the user does not have a previously saved path to RScript.exe or if they have chosen to change the path to RScript.exe
-		if (changePath):
-			chooseFile = JFileChooser()
-			chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-
-			if((chooseFile.showDialog(self.frame, "Select RScript.exe") is not None)):
-				file = File(chooseFile.getSelectedFile().getPath())
-
-				#Ensure user has correctly selected rscript.exe
-				#if not(self.validateUserInput("R Path", [file.getName()], ["rscript.exe"])):
-				#	self.rScriptSearch()
-				
-				self.setDirectory("R Path", chooseFile.getSelectedFile().getPath())
-				self.rcommand = chooseFile.getSelectedFile()
-
-	#Action listener for Change R Path menu option
-	def changeRPath(self, event):
-		self.rScriptSearch(True)
-
 	# Funtion to open the text file where data is saved
+	# TODO: replace with better method
 	def saveToFile(self):
 		try:
 			pluginDir = IJ.getDir("plugins") + "/Medical_Image"
@@ -900,15 +932,12 @@ class ImageProcessorMenu:
 			writer.close()
 		except IOException:
 			print "IO Exception"
-			
-	#Creates a generic dialog window to display error messages
+#Creates a generic dialog window to display error messages
 	def showErrorDialog(self, title, message):
 		self.frameToDispose = GenericDialog("")
-
 		self.frameToDispose.setTitle(title)
 		self.frameToDispose.addMessage(message)
 		self.frameToDispose.showDialog()
-
 	
 	def validateUserInput(self, inputCategory, userInput, validInputs):
 		isValid = True
@@ -929,7 +958,8 @@ class ImageProcessorMenu:
 			elif (inputCategory == "R Path"):
 				errorTitle = "ERROR - Invalid R Path"
 				errorMessage = "Error: " + "'" + userInput[0] + "'" + " is Not the Correct File.  Please Ensure You Have Navigated to the R Installation Directory and Have Selected 'Rscript.exe'"
-			
+
+			
 			self.showErrorDialog(errorTitle, errorMessage)
 		return isValid
 
@@ -1050,31 +1080,19 @@ class ImageProcessorMenu:
 		i=0
 		for p in paths:
 			if(i==1):
-				print "RPATH: " + p
 				self.setDirectory("R Path", p)
 			elif(i==2):
-				print "INPUT: " + p
 				self.setDirectory("Input", p)
 			elif(i==3):
-				print "OUTPUT: " + p
 				self.setDirectory("Output", p)
 			elif(i==4):
-				print "MACRO: " + p
 				self.setDirectory("Macro File", p)
 			elif(i==5):
-				#TODO - reinstantiate after R Script functionality is implemented
 				#self.setDirectory("R Script", p)
 				#self.rScriptSelectTextfield.setText(p)
 				tmp = ""
 			i = i+1
 		self.shouldEnableStart()
-			
-		
-
-
-			
-
-	
 
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
