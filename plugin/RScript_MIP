@@ -1,17 +1,38 @@
-title: "Medical Image Analysis"
-author: "Medical Image Processing Group"
-date: "October 23, 2015"
-output: html_document
-description: Will first clear the enviornment and set the directory based on a function. 
-Will read all csv files and save them as a data frame. Will take the data frame and alter the 
-columns, so that the column names are appended with the data frame. From then on will go through a 
-series of functions that will plot the data.
 ---
-
+title: "MIP 11_9_2015"
+date: "November 9, 2015"
+---
+Added variables for date and time. A subdirectory will not be created within the current directory. The name of the subdirectory will be the date. This way instead of automatically writing over a plot, old plots will be saved. Each plot, when saved will be timestamped. That time will be included in the files name. I also created a new function for installing packages. If a package is in the gobal enviornment it will not be installed and if it isn't already installed it will be. This way the user will be able to easily add any more packages they need to. Lastly, I created three new plots: scatterplot, lineplot, and density curve. Working on making these plots easily interchangeable.
 
 Clear global enviornment
 ```{r}
 rm(list = ls(all.names = TRUE))
+```
+
+Retrieve Date and Time
+Date will be used to create a new directory
+Time will be used to save files into that new directory
+```{r}
+curDate <- Sys.Date()
+curTime <- format(Sys.time(), "%I_%M %p")
+```
+
+
+Function to install packages if not installed.
+If you create a method that requires a different package along with the ones listed below, simply add a comma followed by "your package name", after "psych" below.It will automatically test if it is installed and if not will install it.
+```{r}
+checkPackage <- function(x){
+  for( i in x ){
+    #  require returns TRUE invisibly if it was able to load package
+    if( ! require( i , character.only = TRUE ) ){
+      #  If package was not able to be loaded then re-install
+      install.packages( i , dependencies = TRUE )
+    }
+  }
+}
+
+#  Then try/install packages...Insert any more packages that may be needed here
+checkPackage( c("ggplot2","psych","corrgram") )
 ```
 
 
@@ -27,14 +48,12 @@ Calling getwd to return if the directory changed.
 Based on the current directory the csv Files will be loaded from there.
 ```{r}
 setDirectory("~/CS 470")
-#testing
+#testing that directory was changed correctly
 getwd()
 ```
 
 
-This is the code to read all csv files into R. It will create a dataframe for each
-csv file individually and title that dataframe the file's original name (removing spaces and the .csv). 
-Originally in a function, but removed because the data would not load into  the global enviornment.
+This is the code to read all csv files into R. It will create a dataframe for each csv file individually and title that dataframe the file's original name (removing spaces and the .csv). Originally in a function, but removed because the data would not load into  the global enviornment.
 ```{r}
 path <- paste0(getwd(), "/")
 files <- list.files(path=path, pattern="*.csv")
@@ -50,14 +69,21 @@ for(file in files)
 }
 ```
 
+Create a subdirectory based on the curDate variable for saving plots.
+Will then set current directory to the new direcory created. This way all the data has already been loaded into the global enviornment per the previous directory. Now all new plots will be saved to the new directory.
+```{r}
+dir.create(file.path(path,curDate), showWarnings = FALSE)
+setDirectory(paste(path,curDate,"/",sep = ""))
+getwd()
+```
+
 This function should return a proper list with all the data.frames as elements
 ```{r}
 dfs <- Filter(function(x) is(x, "data.frame"), mget(ls()))
 ```
 
 Find the name of the current data frame in the list and 
-append it to the columns within that data frame. This is only altering the items in the list. The original data 
-frame is still the same.
+append it to the columns within that data frame. This is only altering the items in the list. The original data frame is still the same.
 This way when the plots are saved you are able to identify the 
 data frame they are of.
 ```{r}
@@ -74,43 +100,29 @@ for(i in 1:length(dfs)){
 ```
 
 
-Will plot the total amount (count) of each variable within the selected data frame.
+Will plot the total amount (count) of each variable within the selected data frame.*Looking for a way to plot all in one window
 ```{r}
-plotHistFunc <- function(x, na.rm = TRUE, ...) {
-  #need to install ggplot2
+
+plotIndividualHistFunc <- function(x, na.rm = TRUE, ...) {
   library(ggplot2)
   nm <- names(x)
+  par(mfrow = c(2,2))
   for (i in seq_along(nm)) {
     histoplots <-ggplot(x,aes_string(x = nm[i])) + geom_histogram(alpha = .5,fill = "dodgerblue")
-    
     ggsave(histoplots,filename=paste0(nm[i],"_Histogram",".jpg",sep=""))
   }
 }
 ```
 
-
-Goes into a specific row within a column. 
+Plots rows within a column
 ```{r}
 compareFunction <- function(x){
-  #Need better variable identification
-  for(columns in dfs){
-    xLabel <- names(columns)
-    xVariable <- columns
-    for(x in columns){
-      yLabel <- names(columns)
-      yVariable <- x
-       title <- paste0("Comparing Data within each Column", "_", df.name)
-  
-    #Will only save the last graph output. Commented out.
-    #jpeg(paste("ColumnComparison_", yLabel,".jpeg",sep=""))
-        plot(xVariable, yVariable,col='blue', 
-           main = title)
-   # dev.off()
-    }
-  }
+  plotPairs <- pairs(x)
+  jpeg(paste("ColumnPlots","_",df.name,".jpg",sep=""))
+  plotPairs
+  dev.off()
 }
 ```
-
 
 Plot Generic. Designed for a quick look at numberic data frames.
 Intended for data frames with numeric columns. 
@@ -123,23 +135,16 @@ plotFunction <- function(x){
 }
 ```
 
-Correlation Corrgram.
-Correlograms help us visualize the data in correlation matrices.
-x is a data frame with one observation per row.
-order=TRUE will cause the variables to be ordered using principal component analysis of the correlation matrix.
-panel= refers to the off-diagonal panels. You can use lower.panel= and upper.panel= to choose different options 
-below and above the main diagonal respectively. text.panel= and diag.panel= refer to the main diagnonal.
-panel.pie (the filled portion of the pie indicates the magnitude of the correlation)
-panel.shade (the depth of the shading indicates the magnitude of the correlation)
+Correlation - Plotting columns within one data frame
+Positive correlations are displayed in blue and negative correlations in red color. Color intensity and the size of the circle are proportional to the correlation coefficients.
 ```{r}
 plotCorrelation <- function(x){
-  #install.packages("corrgram")
   library(corrgram)
-  r <- cor(x)
   jpeg(paste("CorrelationPlot_",df.name,".jpg",sep=""))
-  corrgram(r, order = TRUE, lower.panel=panel.shade,
+  plot(corrgram(cor(x,use = "complete.obs"),   # NA are removed
+      order = TRUE, lower.panel=panel.shade,
            upper.panel = panel.pie,text.panel=panel.txt,
-           main = "Plotting Correlation")
+           main = "Plotting Correlation"))
   dev.off()
 }
 ```
@@ -153,14 +158,62 @@ plotTSData <- function(x){
 }
 ```
 
+Working on another variation of plotting the corrgram
+```{r}
+plotCor <- function(x){
+#install.packages("psych")
+library(psych)
+output = corr.test(x)
+names(output)  # to take a look at the available output statistics
+A = output$r    # matrix A here contains the correlation coefficients
+B = output$p 
+library(corrgram)
+corrgram(A)  # visualizing the correlation coefficients 
+corrgram(B)  # visualizing the p-values
+
+sig_element = ifelse(B < 0.05, A, NA)
+newdata <- na.omit(sig_element)
+newdatan <- complete.cases(newdata)
+if(min(dim(newdatan)) < 2) {
+}
+else
+  cor.plot(newdatan)
+
+}
+```
+
+Scatter Plot of Data Frames
+To add a data frame to the plot:
++ geom_point(data = Your data frame,aes(x=insert x variable,y=insert y variable), color = 'insert color')
+```{r}
+library(ggplot2)
+jpeg(paste("Scatter Plot Area ",curTime,".jpg",sep=""))
+ggplot() + ggtitle('Area ScatterPlot_') + geom_point(data = Test1, aes(x=Count,y=Area), color = 'green')+ geom_point(data = Test2,aes(x=Count,y=Area), color = 'blue')+ geom_point(data = Macro3,aes(x=Count,y=Area), color ='red')
+dev.off()
+```
+
+Line Plot of Data Frames
+```{r}
+library(ggplot2)
+jpeg(paste("Line Plot Area ",curTime,".jpg",sep=""))
+ggplot() + ggtitle('Area LinePlot') + geom_line(data = Test1, aes(x=Count,y=Area), color = 'green')+ geom_line(data = Test2,aes(x=Count,y=Area), color = 'blue')+ geom_line(data = Macro3,aes(x=Count,y=Area), color ='red')
+dev.off()
+```
+
+Density Curve of Data Frames
+```{r}
+library(ggplot2)
+jpeg(paste("Density Curve Area ",curTime,".jpg",sep=""))
+ggplot() + ggtitle('Area DensityCurve') + geom_density(data = Test1, aes(Area), color = 'green')+ geom_density(data = Test2,aes(Area), color = 'blue')+ geom_density(data = Macro3,aes(Area), color ='red')
+dev.off()
+```
+
 
 Call functions and applying dfs (list of data frames) to those functions
 ```{r}
-lapply(dfs, plotHistFunc)
-lapply(dfs, compareFunction) 
-lapply(dfs, plotFunction)
-lapply(dfs, plotCorrelation)
+lapply(dfs, plotIndividualHistFunc)
+#lapply(dfs, compareFunction) 
+#lapply(dfs, plotFunction)
 lapply(dfs, plotTSData)
-
 ```
 
