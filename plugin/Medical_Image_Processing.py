@@ -89,6 +89,8 @@ class ImageProcessorMenu:
 		# String of accepted file types for use throughout application
 		# TODO: Update the list of valid image types
 		self.validFileExtensionsString = ".jpg, .png, .tif, .dcm, .gif"
+		# path for the stored text file
+		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
 
 		# Create the menu frame with size of 450x400
 		frameWidth, frameHeight = 450, 400
@@ -224,9 +226,10 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
-		self.prepopulateDirectories()
-		self.setRPath()
+		#self.prepopulateDirectories()
+		self.findR()
 
+	'''
 	def setRPath(self):
 		# TODO: Replace with new text file storage method
 		# 	In general: Try to read in the path from the text file
@@ -235,10 +238,10 @@ class ImageProcessorMenu:
 		# Create the file to house the path
 		file = File(pluginDir + "\Medical_Image_Processing.txt")
 		if not file.exists():
-			message = ("No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\"
-						"On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\"
-						"On OS X, Rscript is usually found in /usr/local/bin/.\"
-						"On Linux, Rscript is usually found in /usr/bin.")
+			message = "No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\n\
+						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\
+						On OS X, Rscript is usually found in /usr/local/bin/.\n\
+						On Linux, Rscript is usually found in /usr/bin."
 			JOptionPane.showMessageDialog(self.frame, message)
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
 			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
@@ -257,6 +260,56 @@ class ImageProcessorMenu:
 					self.rcommand = chooseFile.getSelectedFile()
 				#JOptionPane.showMessageDialog(self.frame, self.rcommand)
 				#self.saveToFile()
+	'''
+
+	# read in the data from the path file, return as a dictionary
+	def readPathFile(self):
+		returnDictionary = {
+			"inputPath": "",
+			"outputPath": "",
+			"macroPath": "",
+			"rPath": ""}
+		# open the file as read-only
+		pathFile = open(self.pathFile, 'r')
+		# Take each line, split along delimeter, and store in dictionary
+		for line in pathFile:
+			# split on tab character
+			split = line.split("\t")
+			# update the dictionary only if splitting shows there was a value stored
+			if len(split) > 1:
+				returnDictionary[split[0]] = split[1].strip()
+		pathFile.close()
+		return returnDictionary
+	
+	def findR(self):
+		# get rPath from the path file
+		# requires that the path file exists
+		rPath = self.readPathFile()["rPath"]
+		# if it found one, set the global variable, else further the search
+		if rPath:
+			self.rcommand = rPath
+		else:
+			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
+			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
+			if os.path.exists(osxdir):
+				self.rcommand = osxdir
+			elif os.path.exists(linuxdir):
+				self.rcommand = linuxdir
+			elif os.path.exists(windowsdir):
+				self.rcommand = next(os.walk(windowsdir))[1][-1]
+			# If none of those work
+			if not self.rcommand:
+				message = "No R path found. You will be asked to select the Rscript executable.\n\
+						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\
+						On OS X, Rscript is usually found in /usr/local/bin/.\n\
+						On Linux, Rscript is usually found in /usr/bin."
+				#JOptionPane.showMessageDialog(self.frame, message)
+				chooseFile = JFileChooser()
+				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+				# TODO: Verify that the selected file is Rscript
+				if chooseFile.showDialog(self.frame, "Select") is not None:
+					self.rcommand = chooseFile.getSelectedFile()
+		
 
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
@@ -380,7 +433,7 @@ class ImageProcessorMenu:
 						command = re.sub(r'run\("([^"]*)"[^\)]*\)', r'\1',line).replace(".","").replace(" ","_")
 					else:
 						command = "unknown"
-					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");" + 'run("Press Enter", "reset");'
+					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");" + 'run("Press Enter", "reset");'
 			else:
 				fileContents = fileContents.replace(";",';saveResults();run("Press Enter", "reset");')
 			fileContents = 'run("Press Enter", "start");' + fileContents + 'run("Press Enter", "stop");'
