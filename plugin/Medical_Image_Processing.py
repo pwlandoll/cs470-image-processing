@@ -6,6 +6,7 @@ from ij import Menus
 from ij import WindowManager
 from ij.gui import GenericDialog
 from ij.macro import Interpreter
+from ij.macro import MacroRunner
 
 from java.awt import BorderLayout
 from java.awt import Color
@@ -234,10 +235,10 @@ class ImageProcessorMenu:
 		# Create the file to house the path
 		file = File(pluginDir + "\Medical_Image_Processing.txt")
 		if not file.exists():
-			message = "No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\
-						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\
-						On OS X, Rscript is usually found in /usr/local/bin/.\
-						On Linux, Rscript is usually found in /usr/bin."
+			message = ("No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\"
+						"On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\"
+						"On OS X, Rscript is usually found in /usr/local/bin/.\"
+						"On Linux, Rscript is usually found in /usr/bin.")
 			JOptionPane.showMessageDialog(self.frame, message)
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
 			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
@@ -379,138 +380,141 @@ class ImageProcessorMenu:
 						command = re.sub(r'run\("([^"]*)"[^\)]*\)', r'\1',line).replace(".","").replace(" ","_")
 					else:
 						command = "unknown"
-					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");"
+					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");" + 'run("Press Enter", "reset");'
+			else:
+				fileContents = fileContents.replace(";",';saveResults();run("Press Enter", "reset");')
+			fileContents = 'run("Press Enter", "start");' + fileContents + 'run("Press Enter", "stop");'
 
 
-				# Inserts in import function if the user did not use one
-				if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
-					# Import the image using the bio-formats importer
-					importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
-								  'if(is("composite") == 1){'
-								  	  # Merge the image into one channel, instead of three seperate red, green, and blue channels
-									  'run("Stack to RGB");'
-									  # Remember the id of the new image
-									  'selectedImage = getImageID();'
-									  # Close the seperate channel file
-									  'for (i=0; i < nImages; i++){ '
-									  	'selectImage(i+1);'
-									  	'if(!(selectedImage == getImageID())){'
-									  		'close();'
-									  		'i = i - 1;'
-									  	'}'
-									  '}'
-									  # Reselect the new image
-									  'selectImage(selectedImage);'
-									  # Rename window the file name (removes (RGB) from the end of the file window)
-									  'rename(getInfo("image.filename"));'
-								  '}')
-
-					fileContents = importCode + fileContents
-
-								  # Checks if image is has a valid extension, if not, replace it with .tif
-				functionToSave = ('function getSaveName(image){'
-									# Name of the file
-									'name = substring(image, 0, indexOf(image,"."));'
-									# Extension
-									'ext = substring(image, indexOf(image,"."));'
-									# Extensions supported by Bio-Formats-Exporter
-									'validExts = ".jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz";'
-									# Checks if ext is in validExts
-									'if(indexOf(validExts, ext) == -1){'
-										'image = name + ".tif";'
-									'}'
-									# Return same string passed in, or same name with .tif extension
-									'return image;'
+			# Inserts in import function if the user did not use one
+			if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
+				# Import the image using the bio-formats importer
+				importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
+							  'if(is("composite") == 1){'
+							  	  # Merge the image into one channel, instead of three seperate red, green, and blue channels
+								  'run("Stack to RGB");'
+								  # Remember the id of the new image
+								  'selectedImage = getImageID();'
+								  # Close the seperate channel file
+								  'for (i=0; i < nImages; i++){ '
+								  	'selectImage(i+1);'
+								  	'if(!(selectedImage == getImageID())){'
+								  		'close();'
+								  		'i = i - 1;'
+								  	'}'
 								  '}'
-								  # Creates the column name in the results window and adds the imageName to each record
-								  'function saveResults(){'
-								    # Checks if a results window is open	
-									'if (isOpen("Results")) {'
-										# Loop for every record in the results window
-										'for(i=0;i<getValue("results.count");i++){'
-											# Add the imagename to the record
-											'setResult("Image Name", i, List.get(getImageID()));'
+								  # Reselect the new image
+								  'selectImage(selectedImage);'
+								  # Rename window the file name (removes (RGB) from the end of the file window)
+								  'rename(getInfo("image.filename"));'
+							  '}')
+
+				fileContents = importCode + fileContents
+
+							  # Checks if image is has a valid extension, if not, replace it with .tif
+			functionToSave = ('function getSaveName(image){'
+								# Name of the file
+								'name = substring(image, 0, indexOf(image,"."));'
+								# Extension
+								'ext = substring(image, indexOf(image,"."));'
+								# Extensions supported by Bio-Formats-Exporter
+								'validExts = ".jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz";'
+								# Checks if ext is in validExts
+								'if(indexOf(validExts, ext) == -1){'
+									'image = name + ".tif";'
+								'}'
+								# Return same string passed in, or same name with .tif extension
+								'return image;'
+							  '}'
+							  # Creates the column name in the results window and adds the imageName to each record
+							  'function saveResults(){'
+							    # Checks if a results window is open	
+								'if (isOpen("Results")) {'
+									# Loop for every record in the results window
+									'for(i=0;i<getValue("results.count");i++){'
+										# Add the imagename to the record
+										'setResult("Image Name", i, List.get(getImageID()));'
+									'}'
+									'selectWindow("Results");'
+									# Strip the extension from the file name and save the results as the imagename.csv
+									'saveAs("Results", "FILEPATH\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+									# Close the results window
+									'run("Close");'
+								'}'
+							  '}'
+							  # Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
+							  'function saveChanges(command){'
+								# Checks if an image is open
+								'if(nImages != 0){'
+									# Store the id of the open image to reselect it once the process is over
+									'selectedImage = getImageID();'
+									'for (i=0; i < nImages; i++){ '
+										'selectImage(i+1);'
+										# Get the id of the image
+										'imageID = getImageID();'
+										# Checks if the imageID exists in the list, if not we need to create an entry for it
+										# List uses key,value pairs, in this use case, the key is the imageID, the value is the imageName
+										'if(List.get(imageID) == ""){'
+											# If there was no previous image set the name of the file to its window title
+											'if(List.get("previousImage") == ""){'
+												'List.set(imageID,getTitle());'
+											'}'
+											# Otherwise make it its window title stripped of the extension, followed by the name of the previous image
+											'else{'
+												'title = replace(getTitle(), " ", "_");'
+												'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
+													'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
+												'}'
+												'List.set(imageID, substring(title,0,indexOf(title,".")) + "_" + List.get(List.get("previousImage")));'
+											'}'
 										'}'
-										'selectWindow("Results");'
-										# Strip the extension from the file name and save the results as the imagename.csv
-										'saveAs("Results", "FILEPATH\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
-										# Close the results window
-										'run("Close");'
-									'}'
-								  '}'
-								  # Add the function saveChanges() to the macro to check for any changes in the images that need to be saved
-								  'function saveChanges(command){'
-									# Checks if an image is open
-									'if(nImages != 0){'
-										# Store the id of the open image to reselect it once the process is over
-										'selectedImage = getImageID();'
-										'for (i=0; i < nImages; i++){ '
-											'selectImage(i+1);'
-											# Get the id of the image
-											'imageID = getImageID();'
-											# Checks if the imageID exists in the list, if not we need to create an entry for it
-											# List uses key,value pairs, in this use case, the key is the imageID, the value is the imageName
-											'if(List.get(imageID) == ""){'
-												# If there was no previous image set the name of the file to its window title
-												'if(List.get("previousImage") == ""){'
-													'List.set(imageID,getTitle());'
+										'title = replace(List.get(imageID), " ", "_");'
+										# If anything exists after the extension, move it to the front of the image name instead
+										'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
+											'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
+										'}'
+										'title = getSaveName(title);'
+										# If file doesn't exist, save it
+										'if(File.exists("FILEPATH\\\\" + title) != 1){'
+											'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+											'setOption("Changes", false);'
+										'}'
+										# If changes have been made to the image, save it
+										'if(is("changes")){'
+											'title = command + "_" + title;'
+											'if(File.exists("FILEPATH\\\\" + title) == 1){'
+												# Name without extension
+												'name = substring(title, 0, indexOf(title,"."));'
+												# Filename counter
+												'titleIteration = 0;'
+												# File extension
+												'ext = substring(title, indexOf(title, "."));'
+												# While the file exists, increment the counter to produce a different name
+												'while(File.exists("FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext) == 1){'
+													'titleIteration = titleIteration + 1;'
 												'}'
-												# Otherwise make it its window title stripped of the extension, followed by the name of the previous image
-												'else{'
-													'title = replace(getTitle(), " ", "_");'
-													'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
-														'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
-													'}'
-													'List.set(imageID, substring(title,0,indexOf(title,".")) + "_" + List.get(List.get("previousImage")));'
-												'}'
-											'}'
-											'title = replace(List.get(imageID), " ", "_");'
-											# If anything exists after the extension, move it to the front of the image name instead
-											'if(indexOf(title, "_", indexOf(title, ".")) != -1){'
-												'title = substring(title, indexOf(title, "_", indexOf(title, ".")) + 1) + substring(title, 0, indexOf(title, "_", indexOf(title, ".")));'
-											'}'
-											'title = getSaveName(title);'
-											# If file doesn't exist, save it
-											'if(File.exists("FILEPATH\\\\" + title) != 1){'
+												# Name of the file to export
+												'title = name + "(" + titleIteration + ")" + ext;'
 												'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
-												'setOption("Changes", false);'
 											'}'
-											# If changes have been made to the image, save it
-											'if(is("changes")){'
-												'title = command + "_" + title;'
-												'if(File.exists("FILEPATH\\\\" + title) == 1){'
-													# Name without extension
-													'name = substring(title, 0, indexOf(title,"."));'
-													# Filename counter
-													'titleIteration = 0;'
-													# File extension
-													'ext = substring(title, indexOf(title, "."));'
-													# While the file exists, increment the counter to produce a different name
-													'while(File.exists("FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext) == 1){'
-														'titleIteration = titleIteration + 1;'
-													'}'
-													# Name of the file to export
-													'title = name + "(" + titleIteration + ")" + ext;'
-													'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
-												'}'
-												'else{'
-													'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
-												'}'
-												# Change the name of the image in the List
-												'List.set(imageID, title);'
-												# Mark file has no changes
-												'setOption("Changes", false);'
+											'else{'
+												'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
 											'}'
+											# Change the name of the image in the List
+											'List.set(imageID, title);'
+											# Mark file has no changes
+											'setOption("Changes", false);'
 										'}'
-										# Save the results windows if its open
-										'saveResults();'
-										# Select the image that was originally selected
-										'selectImage(selectedImage);'
-										# Set the previous image to the selectedImage id
-										'List.set("previousImage", selectedImage);'
 									'}'
-								'}')
-				fileContents = functionToSave + fileContents
+									# Save the results windows if its open
+									'saveResults();'
+									# Select the image that was originally selected
+									'selectImage(selectedImage);'
+									# Set the previous image to the selectedImage id
+									'List.set("previousImage", selectedImage);'
+								'}'
+							'}')
+			fileContents = functionToSave + fileContents
 				
 			# Inserts a save results function if a results window is open and the user did not save it
 			if fileContents.find('saveAs("Results"') == -1:
@@ -1141,6 +1145,9 @@ class MacroProgressMenu(WindowAdapter):
 		# Shows the main menu
 		self.ref.frame.setVisible(True)
 
+		# Stops the automatic enter pressing
+		MacroRunner('run("Press Enter", "stop");')
+
 		# Disposes of this progress menu
 		self.disposeMenu()
 
@@ -1166,7 +1173,10 @@ class macroRunner(Runnable):
 	def run(self):
 		self.run = True
 		self.inter = Interpreter()
-		self.inter.run(self.macroString)
+		try:
+			self.inter.run(self.macroString)
+		except:
+			MacroRunner('run("Press Enter", "stop");')
 		# Prevents future macros from running if current macro was aborted
 		if self.run:
 			self.ref.process()
