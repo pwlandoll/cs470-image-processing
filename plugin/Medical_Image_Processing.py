@@ -227,42 +227,22 @@ class ImageProcessorMenu:
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
 		#self.prepopulateDirectories()
+		# findR to be replaced with new setRPath method that will call findR
+		# self.setRPath()
 		self.findR()
 
-	'''
-	def setRPath(self):
-		# TODO: Replace with new text file storage method
-		# 	In general: Try to read in the path from the text file
-		# 	If that comes up with nothing or the file doesn't exist, proceed
-		pluginDir = IJ.getDir("plugins") + "\Medical_Image"
-		# Create the file to house the path
-		file = File(pluginDir + "\Medical_Image_Processing.txt")
-		if not file.exists():
-			message = "No R path saved. If no path is found automatically, you will be asked to select the Rscript executable.\n\
-						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\
-						On OS X, Rscript is usually found in /usr/local/bin/.\n\
-						On Linux, Rscript is usually found in /usr/bin."
-			JOptionPane.showMessageDialog(self.frame, message)
-			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
-			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
-			if os.path.exists(osxdir):
-				self.rcommand = osxdir
-			elif os.path.exists(linuxdir):
-				self.rcommand = linuxdir
-			elif os.path.exists(windowsdir):
-				self.rcommand = next(os.walk(windowsdir))[1][-1]
-			# If none of those work
-			if not self.rcommand:
-				chooseFile = JFileChooser()
-				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-				# TODO: Verify that the selected file is Rscript
-				if chooseFile.showDialog(self.frame, "Select") is not None:
-					self.rcommand = chooseFile.getSelectedFile()
-				#JOptionPane.showMessageDialog(self.frame, self.rcommand)
-				#self.saveToFile()
-	'''
+	def checkPathFile(self):
+		if not os.path.exists(self.pathFile):
+			# Create the user path file, and write empty file paths
+			pathFile = open(self.pathFile, "w")
+			pathFile.write("inputPath\t\n")
+			pathFile.write("outputPath\t\n")
+			pathFile.write("macroPath\t\n")
+			pathFile.write("rPath\t\n")
 
+	# TODO: Move readPathFile, findR, setRPath somewhere else?
 	# read in the data from the path file, return as a dictionary
+	# to be used by findR, pullFileInfo
 	def readPathFile(self):
 		returnDictionary = {
 			"inputPath": "",
@@ -284,32 +264,35 @@ class ImageProcessorMenu:
 	def findR(self):
 		# get rPath from the path file
 		# requires that the path file exists
+		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
 		# if it found one, set the global variable, else further the search
 		if rPath:
-			self.rcommand = rPath
+			rcmd = rPath
 		else:
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
 			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
 			if os.path.exists(osxdir):
-				self.rcommand = osxdir
+				rcmd = osxdir
 			elif os.path.exists(linuxdir):
-				self.rcommand = linuxdir
+				rcmd = linuxdir
 			elif os.path.exists(windowsdir):
-				self.rcommand = next(os.walk(windowsdir))[1][-1]
+				# set the R command to the latest version in the C:\Program Files\R folder
+				# TODO: get this working in FIJI
+				rcmd = next(os.walk(windowsdir))[1][-1]
 			# If none of those work
-			if not self.rcommand:
+			if not rcmd:
 				message = "No R path found. You will be asked to select the Rscript executable.\n\
 						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\
 						On OS X, Rscript is usually found in /usr/local/bin/.\n\
 						On Linux, Rscript is usually found in /usr/bin."
-				#JOptionPane.showMessageDialog(self.frame, message)
+				JOptionPane.showMessageDialog(self.frame, message)
 				chooseFile = JFileChooser()
 				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 				# TODO: Verify that the selected file is Rscript
 				if chooseFile.showDialog(self.frame, "Select") is not None:
-					self.rcommand = chooseFile.getSelectedFile()
-		
+					rcmd = chooseFile.getSelectedFile()
+		self.rcommand = rcmd
 
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
@@ -641,11 +624,12 @@ class ImageProcessorMenu:
 		self.setDirectory("Macro File", None)
 
 	#Sets the R script directory
-	def setRScriptDirectory(self,event):
+	def setRScriptDirectory(self, event):
 		self.setDirectory("R Script", None)
 
+	# TODO: This sets self.rcommand as a File, not string. This is bad, we need to fix it.
 	#Sets the R Path (RScript.exe) directory
-	def setRPathDirectory(self,event):
+	def setRPathDirectory(self, event):
 		self.setDirectory("R Path", None)
 
 	#Action listener for Change R Path menu option
@@ -929,73 +913,13 @@ class ImageProcessorMenu:
 			self.frame.setVisible(True)
 			self.macroMenu.disposeMenu()
 
-	# Searches for the R.exe file on the users system to give pyper the path to it
-	# Creates a file chooser to allow the user to specificy in which directory
-	#	and thus sub directories to look for it in. Allows the seach to happen
-	# 	faster if the user knows where to look, or lets user with no knowledge
-	# 	of file systems find the file by specifiying the root of the drive
-	# Saves the path in the Medical_Image_Processing.txt file in the
-	# 	Medical_Image folder found in the fiji plugins directory
-	def rSearch(self):
-		# File to search for
-		lookfor = 'R.exe'
-
-		# Create a file chooser to pick which directory to recrursively search in
-		chooser = JFileChooser()
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
-		if chooser.showDialog(self.frame, "Select") == JFileChooser.APPROVE_OPTION:
-
-			# Recursively search all directories starting in the path choosen by the user
-			for root, dirs, files in os.walk(chooser.getSelectedFile().getPath()):
-
-				# If the file is in one of the directories, store the path and break
-				if lookfor in files:
-					found = join(root, lookfor)
-					self.rcommand = found
-					try:
-						# Path to the Medical_Image directory
-						pluginDir = IJ.getDir("plugins") + "\Medical_Image"
-
-						# Create the file to house the path
-						file = File(pluginDir + "\Medical_Image_Processing.txt")
-						writer = BufferedWriter(FileWriter(file))
-
-						# Create the contents of the file
-						# rPath: Path to R.exe on the users system
-						# inputPath: Last used input directory path
-						# outputPath: Last used output directory path
-						# macroPath: Last used macro file path
-						# rScriptPath: Last used r script file path
-						contents = "rPath\t" + found + "\r\n"
-						contents = contents + "inputPath\t\r\n"
-						contents = contents + "outputPath\t\r\n"
-						contents = contents + "macroPath\t\r\n"
-						contents = contents + "rScriptPath\t\r\n"
-						writer.write(contents)
-						writer.close()
-					except IOException:
-						print "IO Exception"
-					break
-
-	# Funtion to open the text file where data is saved
-	# TODO: replace with better method
-	def saveToFile(self):
-		try:
-			pluginDir = IJ.getDir("plugins") + "/Medical_Image"
-			f = File(pluginDir + "/Medical_Image_Processing.txt")
-			writer = BufferedWriter(fileWriter(f))
-			# Write stuff to file
-			writer.write(contents)
-			writer.close()
-		except IOException:
-			print "IO Exception"
-#Creates a generic dialog window to display error messages
+	#Creates a generic dialog window to display error messages
 	def showErrorDialog(self, title, message):
 		self.frameToDispose = GenericDialog("")
 		self.frameToDispose.setTitle(title)
 		self.frameToDispose.addMessage(message)
 		self.frameToDispose.showDialog()
-	
+
 	def validateUserInput(self, inputCategory, userInput, validInputs):
 		isValid = True
 		errorTitle = ""
