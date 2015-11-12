@@ -108,7 +108,7 @@ plotIndividualHistFunc <- function(x, na.rm = TRUE, ...) {
   nm <- names(x)
   par(mfrow = c(2,2))
   for (i in seq_along(nm)) {
-    histoplots <-ggplot(x,aes_string(x = nm[i])) + geom_histogram(alpha = .5,fill = "dodgerblue")
+    histoplots <-ggplot(x,aes_string(x = nm[1], y = nm[i])) + geom_bar(stat = "identity",alpha = .5,fill = "dodgerblue")
     ggsave(histoplots,filename=paste0(nm[i],"_Histogram",".jpg",sep=""))
   }
 }
