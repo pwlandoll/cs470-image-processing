@@ -271,6 +271,7 @@ class ImageProcessorMenu:
 		if rPath and not change:
 			rcmd = rPath
 		else:
+			rcmd = None
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
 			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
 			if os.path.exists(osxdir) and not change:
@@ -287,10 +288,7 @@ class ImageProcessorMenu:
 					pass
 			# If none of those work
 			if not rcmd:
-				message = "No R path found. You will be asked to select the Rscript executable.\n\
-						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\
-						On OS X, Rscript is usually found in /usr/local/bin/.\n\
-						On Linux, Rscript is usually found in /usr/bin."
+				message = "No R path found. You will be asked to select the Rscript executable.\n\On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\On OS X, Rscript is usually found in /usr/local/bin/.\n\On Linux, Rscript is usually found in /usr/bin."
 				if not change:
 					JOptionPane.showMessageDialog(self.frame, message)
 				chooseFile = JFileChooser()
