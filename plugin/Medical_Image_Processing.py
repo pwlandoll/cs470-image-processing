@@ -229,7 +229,7 @@ class ImageProcessorMenu:
 		#self.prepopulateDirectories()
 		# findR to be replaced with new setRPath method that will call findR
 		# self.setRPath()
-		self.findR()
+		self.findR(False)
 
 	def checkPathFile(self):
 		if not os.path.exists(self.pathFile):
@@ -239,6 +239,7 @@ class ImageProcessorMenu:
 			pathFile.write("outputPath\t\n")
 			pathFile.write("macroPath\t\n")
 			pathFile.write("rPath\t\n")
+			pathFile.close()
 
 	# TODO: Move readPathFile, findR, setRPath somewhere else?
 	# read in the data from the path file, return as a dictionary
@@ -261,32 +262,37 @@ class ImageProcessorMenu:
 		pathFile.close()
 		return returnDictionary
 	
-	def findR(self):
+	def findR(self, change):
 		# get rPath from the path file
 		# requires that the path file exists
 		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
 		# if it found one, set the global variable, else further the search
-		if rPath:
+		if rPath and not change:
 			rcmd = rPath
 		else:
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
 			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
-			if os.path.exists(osxdir):
+			if os.path.exists(osxdir) and not change:
 				rcmd = osxdir
-			elif os.path.exists(linuxdir):
+			elif os.path.exists(linuxdir) and not change:
 				rcmd = linuxdir
-			elif os.path.exists(windowsdir):
+			elif os.path.exists(windowsdir) and not change:
 				# set the R command to the latest version in the C:\Program Files\R folder
-				# TODO: get this working in FIJI
-				rcmd = next(os.walk(windowsdir))[1][-1]
+				try:
+					rcmd = os.listdir(windowsdir)[-1]
+				except IndexError:
+					# If the R directory exists, but has no subdirectories, then an IndexError happens
+					# We don't care at this point, we'll just pass it over without setting rcmd.
+					pass
 			# If none of those work
 			if not rcmd:
 				message = "No R path found. You will be asked to select the Rscript executable.\n\
 						On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\
 						On OS X, Rscript is usually found in /usr/local/bin/.\n\
 						On Linux, Rscript is usually found in /usr/bin."
-				JOptionPane.showMessageDialog(self.frame, message)
+				if not change:
+					JOptionPane.showMessageDialog(self.frame, message)
 				chooseFile = JFileChooser()
 				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 				# TODO: Verify that the selected file is Rscript
@@ -634,7 +640,7 @@ class ImageProcessorMenu:
 
 	#Action listener for Change R Path menu option
 	def changeRPath(self, event):
-		self.rScriptSearch(True)
+		self.findR(True)
 
 	# Creates a filechooser for the user to select a directory for input or output
 	# @param directoryType	Determines whether or not to be used to locate the input, output, macro file, or R script directory
@@ -697,7 +703,7 @@ class ImageProcessorMenu:
 				self.macroDirectory = file
 				self.macroSelectTextfield.setText(savedFilePath)
 			elif directoryType == "R Path":
-				self.rcommand = file
+				self.rcommand = savedFilePath
 				
 			#TODO instantiate after R Script functionality is implemented
 			#elif directoryType == "R Script":
@@ -750,7 +756,7 @@ class ImageProcessorMenu:
 
 	def runRScript(self, scriptFilename):
 		if not self.rcommand:
-			self.rcommand = "Rscript"
+			findR(False)
 		os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
