@@ -281,7 +281,7 @@ class ImageProcessorMenu:
 			elif os.path.exists(windowsdir) and not change:
 				# set the R command to the latest version in the C:\Program Files\R folder
 				try:
-					rcmd = os.listdir(windowsdir)[-1]
+					rcmd = '"' + windowsdir + "\\" + os.listdir(windowsdir)[-1] + '\\bin\\Rscript.exe"'
 				except IndexError:
 					# If the R directory exists, but has no subdirectories, then an IndexError happens
 					# We don't care at this point, we'll just pass it over without setting rcmd.
@@ -756,6 +756,8 @@ class ImageProcessorMenu:
 	def runRScript(self, scriptFilename):
 		if not self.rcommand:
 			findR(False)
+		if self.rcommand[0:1] == '"':
+			self.rcommand = '"' + self.rcommand + '"'
 		os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
@@ -917,6 +919,9 @@ class ImageProcessorMenu:
 			#	of the progress menu.
 			self.frame.setVisible(True)
 			self.macroMenu.disposeMenu()
+
+			self.runRScript(self.rScriptDirectory)
+			
 
 	#Creates a generic dialog window to display error messages
 	def showErrorDialog(self, title, message):
@@ -1161,7 +1166,8 @@ class macroRunner(Runnable):
 			MacroRunner('run("Press Enter", "stop");')
 		# Prevents future macros from running if current macro was aborted
 		if self.run:
-			WindowManager.closeAllWindows()
+			#ADD FOR FINAL
+			#WindowManager.closeAllWindows()
 			self.ref.process()
 
 	# Sets the macro file
