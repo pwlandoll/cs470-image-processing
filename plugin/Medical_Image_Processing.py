@@ -226,9 +226,7 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
-		self.prepopulateDirectories()
 		# findR to be replaced with new setRPath method that will call findR
-		# self.setRPath()
 		self.findR(False)
 
 	def checkPathFile(self):
@@ -267,9 +265,10 @@ class ImageProcessorMenu:
 		# requires that the path file exists
 		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
-		# if it found one, set the global variable, else further the search
+		# if it found one, set the global variable and prepopulate directories, else further the search
 		if rPath and not change:
 			rcmd = rPath
+			self.prepopulateDirectories()
 		else:
 			rcmd = None
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
@@ -911,7 +910,7 @@ class ImageProcessorMenu:
 			#Creates a log file (or appends to it if one already exists) which will record processing procedures and other pertinent information
 			self.createLogFile(file, logFileDir, outputDir, fileContents)
 
-			self.createUserPathFile()
+			self.updateUserPathFile()
 		else:
 			# Macros are finished running, so show the main menu and dispose
 			#	of the progress menu.
@@ -1000,9 +999,9 @@ class ImageProcessorMenu:
 		#Close the file
 		log.close()
 
-	#Creates/Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
+	#Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
 	#This file's data will be used to prepopulate the text fields with the user's last selected directories
-	def createUserPathFile(self):
+	def updateUserPathFile(self):
 		# Path to the Medical_Image directory
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
 		
@@ -1061,23 +1060,19 @@ class ImageProcessorMenu:
 	#Assign each global path variable to corresponding path from array.  Also change text of each textfield.
 	def prepopulateDirectories(self):
 		#Get user paths file
-		paths = self.getUserPathFile()
-				
-		i=0
-		for p in paths:
-			if(i==1):
-				self.setDirectory("R Path", p)
-			elif(i==2):
-				self.setDirectory("Input", p)
-			elif(i==3):
-				self.setDirectory("Output", p)
-			elif(i==4):
-				self.setDirectory("Macro File", p)
-			elif(i==5):
-				#self.setDirectory("R Script", p)
-				#self.rScriptSelectTextfield.setText(p)
-				tmp = ""
-			i = i+1
+		paths = self.readPathFile()		
+
+		#Populate R Path
+		self.setDirectory("R Path", paths['rPath'])
+		#Populate Input Directory Path
+		self.setDirectory("Input", paths['inputPath'])
+		#Populate Output Directory Path
+		self.setDirectory("Output", paths['outputPath'])
+		#Populate Macro File Path
+		self.setDirectory("Macro File", paths['macroPath'])
+		#Populate R Script Path
+		#self.setDirectory("R Script", paths[''])
+		
 		self.shouldEnableStart()
 
 
