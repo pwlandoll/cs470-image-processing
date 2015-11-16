@@ -226,7 +226,7 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
-		#self.prepopulateDirectories()
+		self.prepopulateDirectories()
 		# findR to be replaced with new setRPath method that will call findR
 		# self.setRPath()
 		self.findR(False)
@@ -387,10 +387,10 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\\\1IMAGENAME]", fileContents)
 
 			# Replace the save results directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\\\..\\\\', fileContents)
 
 			# Replace the save text directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\\\..\\\\', fileContents)
 
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
@@ -474,10 +474,11 @@ class ImageProcessorMenu:
 									'for(i=0;i<getValue("results.count");i++){'
 										# Add the imagename to the record
 										'setResult("Image Name", i, List.get(getImageID()));'
+										'setResult("Base Image", i, "IMAGENAME");'
 									'}'
 									'selectWindow("Results");'
 									# Strip the extension from the file name and save the results as the imagename.csv
-									'saveAs("Results", "FILEPATH\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+									'saveAs("Results", "FILEPATH\\\\..\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
 									# Close the results window
 									'run("Close");'
 								'}'
@@ -546,10 +547,10 @@ class ImageProcessorMenu:
 											'setOption("Changes", false);'
 										'}'
 									'}'
-									# Save the results windows if its open
-									'saveResults();'
 									# Select the image that was originally selected
 									'selectImage(selectedImage);'
+									# Save the results windows if its open
+									'saveResults();'
 									# Set the previous image to the selectedImage id
 									'List.set("previousImage", selectedImage);'
 								'}'
@@ -1015,7 +1016,7 @@ class ImageProcessorMenu:
 		# outputPath: Last used output directory path
 		# macroPath: Last used macro file path
 		# rScriptPath: Last used r script file path
-		contents = "rPath\t" + self.rcommand.getPath() + "\r\n"
+		contents = "rPath\t" + self.rcommand + "\r\n"
 		contents = contents + "inputPath\t" + self.inputDirectory.getPath() + "\r\n"
 		contents = contents + "outputPath\t" + self.outputDirectory.getPath() + "\r\n"
 		contents = contents + "macroPath\t" + self.macroDirectory.getPath() + "\r\n"
@@ -1160,6 +1161,7 @@ class macroRunner(Runnable):
 			MacroRunner('run("Press Enter", "stop");')
 		# Prevents future macros from running if current macro was aborted
 		if self.run:
+			WindowManager.closeAllWindows()
 			self.ref.process()
 
 	# Sets the macro file
