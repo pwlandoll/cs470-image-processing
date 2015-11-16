@@ -692,28 +692,30 @@ class ImageProcessorMenu:
 			#Get the file from specified path
 			file = File(savedFilePath)
 
-			#Set directory based on type
-			if directoryType == "Input":
-				self.inputDirectory = file
-				self.inputTextfield.setText(file.getPath())
-				self.urlLocation = None
-			elif directoryType == "Output":
-				self.outputDirectory = file
-				self.outputTextfield.setText(savedFilePath)
-			elif directoryType == "Macro File":
-				self.macroDirectory = file
-				self.macroSelectTextfield.setText(savedFilePath)
-			elif directoryType == "R Path":
-				self.rcommand = savedFilePath
-				
-			#TODO instantiate after R Script functionality is implemented
-			#elif directoryType == "R Script":
-				# Get the R Script file
-			#	file = File(savedFilePath)
-			#	self.rScriptDirectory = file.getPath() 
-			#	self.rScriptSelectTextfield.setText(savedFilePath)
-			
-			self.shouldEnableStart()
+			#Only populate the path to the directory if the directory itself actually exists (user may have deleted it)
+			if (os.path.exists(file.getPath())):
+				#Set directory based on type
+				if (directoryType == "Input"):
+					self.inputDirectory = file
+					self.inputTextfield.setText(file.getPath())			
+					self.urlLocation = None
+				elif directoryType == "Output":
+					self.outputDirectory = file
+					self.outputTextfield.setText(savedFilePath)
+				elif directoryType == "Macro File":
+					self.macroDirectory = file
+					self.macroSelectTextfield.setText(savedFilePath)
+				elif directoryType == "R Path":
+					self.rcommand = savedFilePath
+					
+				#TODO instantiate after R Script functionality is implemented
+				#elif directoryType == "R Script":
+					# Get the R Script file
+					#	file = File(savedFilePath)
+					#	self.rScriptDirectory = file.getPath() 
+					#	self.rScriptSelectTextfield.setText(savedFilePath)
+					
+				self.shouldEnableStart()
 
 	def shouldEnableStart(self):
 		# Enable the start button if both an input and output have been selected
