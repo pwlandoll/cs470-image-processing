@@ -93,14 +93,14 @@ class ImageProcessorMenu:
 		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
 
 		# Create the menu frame with size of 450x400
-		frameWidth, frameHeight = 450, 400
+		frameWidth, frameHeight = 500, 400
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(frameWidth, frameHeight)
 		self.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
 
 		# Add a panel to the frame
 		pnl = JPanel()
-		pnl.setBounds(10,10,480,230) #TODO: What are these? Use frameWidth/Height
+		pnl.setBounds(10,10,frameWidth,frameHeight) #TODO: What are these? Use frameWidth/Height
 		#pnl.setLayout(BoxLayout(BoxLayout.LINE_AXIS)
 		self.frame.add(pnl)
 
@@ -235,10 +235,11 @@ class ImageProcessorMenu:
 		if not os.path.exists(self.pathFile):
 			# Create the user path file, and write empty file paths
 			pathFile = open(self.pathFile, "w")
-			pathFile.write("inputPath\t\n")
-			pathFile.write("outputPath\t\n")
-			pathFile.write("macroPath\t\n")
-			pathFile.write("rPath\t\n")
+			pathFile.write("inputPath\t\r\n")
+			pathFile.write("outputPath\t\r\n")
+			pathFile.write("macroPath\t\r\n")
+			pathFile.write("rPath\t\r\n")
+			pathFile.write("rScriptPath\t\r\n")
 			pathFile.close()
 
 	# TODO: Move readPathFile, findR, setRPath somewhere else?
@@ -281,14 +282,17 @@ class ImageProcessorMenu:
 			elif os.path.exists(windowsdir) and not change:
 				# set the R command to the latest version in the C:\Program Files\R folder
 				try:
-					rcmd = os.listdir(windowsdir)[-1]
+					rcmd = windowsdir + "\\" + os.listdir(windowsdir)[-1] + "\\bin\\Rscript.exe"
 				except IndexError:
 					# If the R directory exists, but has no subdirectories, then an IndexError happens
 					# We don't care at this point, we'll just pass it over without setting rcmd.
 					pass
 			# If none of those work
 			if not rcmd:
-				message = "No R path found. You will be asked to select the Rscript executable.\n\On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\On OS X, Rscript is usually found in /usr/local/bin/.\n\On Linux, Rscript is usually found in /usr/bin."
+				message = ("No R path found. You will be asked to select the Rscript executable.\n"
+					"On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n"
+					"On OS X, Rscript is usually found in /usr/local/bin/.\n"
+					"On Linux, Rscript is usually found in /usr/bin.")
 				if not change:
 					JOptionPane.showMessageDialog(self.frame, message)
 				chooseFile = JFileChooser()
@@ -632,7 +636,6 @@ class ImageProcessorMenu:
 	def setRScriptDirectory(self, event):
 		self.setDirectory("R Script", None)
 
-	# TODO: This sets self.rcommand as a File, not string. This is bad, we need to fix it.
 	#Sets the R Path (RScript.exe) directory
 	def setRPathDirectory(self, event):
 		self.setDirectory("R Path", None)
