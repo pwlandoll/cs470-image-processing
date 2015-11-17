@@ -761,7 +761,7 @@ class ImageProcessorMenu:
 		if not self.rcommand:
 			findR(False)
 		if self.rcommand[0:1] == '"':
-			self.rcommand = '"' + self.rcommand + '"'
+			scriptFilename = '"' + scriptFilename.getPath() + '"'
 		os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
