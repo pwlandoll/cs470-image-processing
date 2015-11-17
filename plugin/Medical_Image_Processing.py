@@ -93,14 +93,14 @@ class ImageProcessorMenu:
 		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
 
 		# Create the menu frame with size of 450x400
-		frameWidth, frameHeight = 450, 400
+		frameWidth, frameHeight = 500, 400
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(frameWidth, frameHeight)
 		self.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
 
 		# Add a panel to the frame
 		pnl = JPanel()
-		pnl.setBounds(10,10,480,230) #TODO: What are these? Use frameWidth/Height
+		pnl.setBounds(10,10,frameWidth,frameHeight) #TODO: What are these? Use frameWidth/Height
 		#pnl.setLayout(BoxLayout(BoxLayout.LINE_AXIS)
 		self.frame.add(pnl)
 
@@ -226,19 +226,18 @@ class ImageProcessorMenu:
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
-		self.prepopulateDirectories()
 		# findR to be replaced with new setRPath method that will call findR
-		# self.setRPath()
 		self.findR(False)
 
 	def checkPathFile(self):
 		if not os.path.exists(self.pathFile):
 			# Create the user path file, and write empty file paths
 			pathFile = open(self.pathFile, "w")
-			pathFile.write("inputPath\t\n")
-			pathFile.write("outputPath\t\n")
-			pathFile.write("macroPath\t\n")
-			pathFile.write("rPath\t\n")
+			pathFile.write("inputPath\t\r\n")
+			pathFile.write("outputPath\t\r\n")
+			pathFile.write("macroPath\t\r\n")
+			pathFile.write("rPath\t\r\n")
+			pathFile.write("rScriptPath\t\r\n")
 			pathFile.close()
 
 	# TODO: Move readPathFile, findR, setRPath somewhere else?
@@ -267,9 +266,10 @@ class ImageProcessorMenu:
 		# requires that the path file exists
 		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
-		# if it found one, set the global variable, else further the search
+		# if it found one, set the global variable and prepopulate directories, else further the search
 		if rPath and not change:
 			rcmd = rPath
+			self.prepopulateDirectories()
 		else:
 			rcmd = None
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
@@ -288,7 +288,10 @@ class ImageProcessorMenu:
 					pass
 			# If none of those work
 			if not rcmd:
-				message = "No R path found. You will be asked to select the Rscript executable.\n\On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n\On OS X, Rscript is usually found in /usr/local/bin/.\n\On Linux, Rscript is usually found in /usr/bin."
+				message = ("No R path found. You will be asked to select the Rscript executable.\n"
+					"On Windows systems, RScript.exe is found in the \\bin\\ folder of the R installation.\n"
+					"On OS X, Rscript is usually found in /usr/local/bin/.\n"
+					"On Linux, Rscript is usually found in /usr/bin.")
 				if not change:
 					JOptionPane.showMessageDialog(self.frame, message)
 				chooseFile = JFileChooser()
@@ -632,7 +635,6 @@ class ImageProcessorMenu:
 	def setRScriptDirectory(self, event):
 		self.setDirectory("R Script", None)
 
-	# TODO: This sets self.rcommand as a File, not string. This is bad, we need to fix it.
 	#Sets the R Path (RScript.exe) directory
 	def setRPathDirectory(self, event):
 		self.setDirectory("R Path", None)
@@ -690,28 +692,30 @@ class ImageProcessorMenu:
 			#Get the file from specified path
 			file = File(savedFilePath)
 
-			#Set directory based on type
-			if directoryType == "Input":
-				self.inputDirectory = file
-				self.inputTextfield.setText(file.getPath())
-				self.urlLocation = None
-			elif directoryType == "Output":
-				self.outputDirectory = file
-				self.outputTextfield.setText(savedFilePath)
-			elif directoryType == "Macro File":
-				self.macroDirectory = file
-				self.macroSelectTextfield.setText(savedFilePath)
-			elif directoryType == "R Path":
-				self.rcommand = savedFilePath
-				
-			#TODO instantiate after R Script functionality is implemented
-			#elif directoryType == "R Script":
-				# Get the R Script file
-			#	file = File(savedFilePath)
-			#	self.rScriptDirectory = file.getPath() 
-			#	self.rScriptSelectTextfield.setText(savedFilePath)
-			
-			self.shouldEnableStart()
+			#Only populate the path to the directory if the directory itself actually exists (user may have deleted it)
+			if (os.path.exists(file.getPath())):
+				#Set directory based on type
+				if (directoryType == "Input"):
+					self.inputDirectory = file
+					self.inputTextfield.setText(file.getPath())			
+					self.urlLocation = None
+				elif directoryType == "Output":
+					self.outputDirectory = file
+					self.outputTextfield.setText(savedFilePath)
+				elif directoryType == "Macro File":
+					self.macroDirectory = file
+					self.macroSelectTextfield.setText(savedFilePath)
+				elif directoryType == "R Path":
+					self.rcommand = savedFilePath
+					
+				#TODO instantiate after R Script functionality is implemented
+				#elif directoryType == "R Script":
+					# Get the R Script file
+					#	file = File(savedFilePath)
+					#	self.rScriptDirectory = file.getPath() 
+					#	self.rScriptSelectTextfield.setText(savedFilePath)
+					
+				self.shouldEnableStart()
 
 	def shouldEnableStart(self):
 		# Enable the start button if both an input and output have been selected
@@ -913,7 +917,7 @@ class ImageProcessorMenu:
 			#Creates a log file (or appends to it if one already exists) which will record processing procedures and other pertinent information
 			self.createLogFile(file, logFileDir, outputDir, fileContents)
 
-			self.createUserPathFile()
+			self.updateUserPathFile()
 		else:
 			# Macros are finished running, so show the main menu and dispose
 			#	of the progress menu.
@@ -1005,9 +1009,9 @@ class ImageProcessorMenu:
 		#Close the file
 		log.close()
 
-	#Creates/Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
+	#Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
 	#This file's data will be used to prepopulate the text fields with the user's last selected directories
-	def createUserPathFile(self):
+	def updateUserPathFile(self):
 		# Path to the Medical_Image directory
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
 		
@@ -1066,23 +1070,19 @@ class ImageProcessorMenu:
 	#Assign each global path variable to corresponding path from array.  Also change text of each textfield.
 	def prepopulateDirectories(self):
 		#Get user paths file
-		paths = self.getUserPathFile()
-				
-		i=0
-		for p in paths:
-			if(i==1):
-				self.setDirectory("R Path", p)
-			elif(i==2):
-				self.setDirectory("Input", p)
-			elif(i==3):
-				self.setDirectory("Output", p)
-			elif(i==4):
-				self.setDirectory("Macro File", p)
-			elif(i==5):
-				#self.setDirectory("R Script", p)
-				#self.rScriptSelectTextfield.setText(p)
-				tmp = ""
-			i = i+1
+		paths = self.readPathFile()		
+
+		#Populate R Path
+		self.setDirectory("R Path", paths['rPath'])
+		#Populate Input Directory Path
+		self.setDirectory("Input", paths['inputPath'])
+		#Populate Output Directory Path
+		self.setDirectory("Output", paths['outputPath'])
+		#Populate Macro File Path
+		self.setDirectory("Macro File", paths['macroPath'])
+		#Populate R Script Path
+		#self.setDirectory("R Script", paths[''])
+		
 		self.shouldEnableStart()
 
 
