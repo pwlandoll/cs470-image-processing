@@ -248,7 +248,8 @@ class ImageProcessorMenu:
 			"inputPath": "",
 			"outputPath": "",
 			"macroPath": "",
-			"rPath": ""}
+			"rPath": "",
+			"rScriptPath": ""}
 		# open the file as read-only
 		pathFile = open(self.pathFile, 'r')
 		# Take each line, split along delimeter, and store in dictionary
@@ -711,10 +712,8 @@ class ImageProcessorMenu:
 					
 				#TODO instantiate after R Script functionality is implemented
 				#elif directoryType == "R Script":
-					# Get the R Script file
-					#	file = File(savedFilePath)
-					#	self.rScriptDirectory = file.getPath() 
-					#	self.rScriptSelectTextfield.setText(savedFilePath)
+				#	self.rScriptDirectory = file.getPath() 
+				#	self.rScriptSelectTextfield.setText(savedFilePath)
 					
 				self.shouldEnableStart()
 
@@ -802,9 +801,9 @@ class ImageProcessorMenu:
 		if not (self.rScriptSelectTextfield.getText() == "Select R Script"):
 			rScript = File(self.rScriptDirectory.getPath())
 
-			#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
-			if not (self.validateUserInput(self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
-				return
+		#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
+		if not (self.validateUserInput(self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
+			return
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
@@ -951,6 +950,9 @@ class ImageProcessorMenu:
 			elif (inputCategory == "Macro File"):
 				errorTitle = "ERROR - Invalid Macro File"
 				errorMessage = "Error: You Have Selected an Invalid Macro File.  Please Ensure Your Selected File Ends With '.ijm'."
+			elif (inputCategory == "R Script"):
+				errorTitle = "ERROR - Invalid R Script"
+				errorMessage = "Erro: You Have Selected an Invalid R Script.  Please Ensure Your Selected File Ends With '.R'."
 			elif (inputCategory == "R Path"):
 				errorTitle = "ERROR - Invalid R Path"
 				errorMessage = "Error: " + "'" + userInput[0] + "'" + " is Not the Correct File.  Please Ensure You Have Navigated to the R Installation Directory and Have Selected 'Rscript.exe'"
@@ -1031,7 +1033,6 @@ class ImageProcessorMenu:
 		contents = contents + "outputPath\t" + self.outputDirectory.getPath() + "\r\n"
 		contents = contents + "macroPath\t" + self.macroDirectory.getPath() + "\r\n"
 
-		#TODO - Reinstantiate after R Script functionality is implemented
 		#if not(self.rScriptDirectory is None):
 		#	contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
 		#else:	
@@ -1082,7 +1083,7 @@ class ImageProcessorMenu:
 		#Populate Macro File Path
 		self.setDirectory("Macro File", paths['macroPath'])
 		#Populate R Script Path
-		#self.setDirectory("R Script", paths[''])
+		#self.setDirectory("R Script", paths['rScriptPath'])
 		
 		self.shouldEnableStart()
 
