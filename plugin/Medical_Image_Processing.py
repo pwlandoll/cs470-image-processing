@@ -868,7 +868,7 @@ class ImageProcessorMenu:
 			# Create a folder with the name of the image in the output folder to house any outputs of the macro
 			if (self.outputDirectory is not None):
 				outputDir = File(self.outputDirectory.getPath() + "/" + fileName)
-				logFileDir = outputDir.getPath() + "/Log.txt"
+				logFileDir = self.outputDirectory.getPath() + "/Log.txt"
 			else:
 				outputDir = File(self.urlLocation.getPath() + "/" + fileName)
 				logFileDir = self.urlLocation.getPath() + "/Log.txt"
@@ -961,7 +961,7 @@ class ImageProcessorMenu:
 	#Copies the original image from the existing directory to the newly created one
 	def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
 		img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave.getName())
-		IJ.save(img, outputDir.getPath() + "//")
+		IJ.save(img, outputDir.getPath() + "//" + fileToSave.getName())
 		img.close()
 
 	#Gets values from file specification components within the JPanel and returns images based on user's specifications
