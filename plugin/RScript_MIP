@@ -1,10 +1,5 @@
-title: "MIP 11/17/2015"
-date: "November 17, 2015"
+date: "November 18, 2015"
 ---
-Cleaned up Code. Created a new data frame that was combined from all the data frames. 
-Added Code to check for installed packages and if not installed add them.Created Plots for 
-Individual plotting purposes between specific data sets and plots designated for plotting the combined 
-data set.Need better legends and coloring for those plots. Working on histogram plot code.
 
 Clear global enviornment
 ```{r}
@@ -46,8 +41,7 @@ setDirectory <- function(location){
 }
 ```
 
-Calling Functions from above. 
-Calling getwd to return if the directory changed. 
+Calling Functions from above.  
 Based on the current directory the csv Files will be loaded from there.
 ```{r}
 setDirectory("~/CS 470")
@@ -94,37 +88,17 @@ combDF <- do.call(rbind,dfs)
 ```
 
 
-Will plot the total amount (count) of each variable within the selected data frame.*Looking for a way to plot all in one window
-```{r}
-plotIndividualHistFunc <- function(x, na.rm = TRUE, ...) {
-  library(ggplot2)
-  nm <- names(x)
-  dfNames <- names(dfs)
-  for(i in 1:length(dfs)){
-    df.name <- dfNames[i]
-    pdf(paste0(df.name,"_Histogram ",curTime,".pdf",sep=""))
-    for (i in seq_along(nm)) {
-      histoplots <-ggplot(x,aes_string(x = nm[1], y = nm[i])) + geom_bar(stat = "identity",alpha = .5,fill = "dodgerblue")
-      plot(histoplots)
-    }
-    dev.off()
-  }
-}
-
-```
-
-
 ```{r}
 plotHist<- function(x){
+l <- x[[1,6]] #the data stored in the first row of the fromDF column
 library(reshape2)
 library(ggplot2)
-jpeg(paste("IndividualHistograms"," ", curTime,".jpg",sep=""))
+jpeg(paste(l, " IndividualHistograms"," ", curTime,".jpg",sep=""))
 d <- melt(x)
 hist <- ggplot(d, aes(x=value)) + geom_histogram() + facet_wrap(~variable, scales = "free_x", nrow = 2)
 plot(hist)
 dev.off()
 }
-#lapply(dfs, plotHist) Working On
 ```
 
 Correlation - Plotting columns within one data frame
@@ -199,7 +173,7 @@ plotCorrelation(combDF)
 
 Call functions and applying dfs (list of data frames) to those functions
 ```{r}
-#lapply(dfs, plotIndividualHistFunc) Working On
+lapply(dfs, plotHist)
 ```
 
 
