@@ -100,7 +100,7 @@ class ImageProcessorMenu:
 
 		# Add a panel to the frame
 		pnl = JPanel()
-		pnl.setBounds(10,10,frameWidth,frameHeight) #TODO: What are these? Use frameWidth/Height
+		pnl.setBounds(10,10,frameWidth,frameHeight)
 		#pnl.setLayout(BoxLayout(BoxLayout.LINE_AXIS)
 		self.frame.add(pnl)
 
@@ -298,7 +298,7 @@ class ImageProcessorMenu:
 				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 				# TODO: Verify that the selected file is Rscript
 				if chooseFile.showDialog(self.frame, "Select") is not None:
-					rcmd = chooseFile.getSelectedFile()
+					rcmd = chooseFile.getSelectedFile().getPath()
 		self.rcommand = rcmd
 
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
@@ -697,7 +697,8 @@ class ImageProcessorMenu:
 				#Set directory based on type
 				if (directoryType == "Input"):
 					self.inputDirectory = file
-					self.inputTextfield.setText(file.getPath())			
+					self.inputTextfield.setText(file.getPath())
+			
 					self.urlLocation = None
 				elif directoryType == "Output":
 					self.outputDirectory = file
@@ -1016,7 +1017,7 @@ class ImageProcessorMenu:
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
 		
 		# Create the file to house the path
-		file = File(pluginDir + "\user_paths.txt")
+		file = File(pluginDir + "/user_paths.txt")
 		writer = BufferedWriter(FileWriter(file))
 		
 		# Create the contents of the file
