@@ -48,19 +48,14 @@ setDirectory("~/CS 470")
 ```
 
 
-This is the code to read all csv files into R. It will create a dataframe for each csv file individually and title that dataframe the file's original name (removing spaces and the .csv).
+This is the code to read all csv files into R. 
+They will be saved as a list of files and then converted into a data frame.
+Still need to handle the chance that the columns will be different.
 ```{r}
 path <- paste0(getwd(), "/")
-files <- list.files(path=path, pattern="*.csv")
-for(file in files)
-{
-  #filename before .csv
-  csvFileName <- which(strsplit(file, "")[[1]]==".")
-  assign(
-    #remove spaces from file
-    gsub(" ","",substr(file, 1, csvFileName-1)), 
-    read.csv(paste(path,file,sep="")))
-}
+file_list <- list.files(path = path, pattern="*.csv")
+data <- do.call("rbind", lapply(file_list, function(x) 
+  read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
 ```
 
 
