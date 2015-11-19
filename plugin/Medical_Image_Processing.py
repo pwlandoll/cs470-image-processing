@@ -1,5 +1,6 @@
 import os
 import re
+import urllib
 
 from ij import IJ
 from ij import Menus
@@ -743,11 +744,17 @@ class ImageProcessorMenu:
 	def downloadFiles(self, filename):
 		# Make the input directory the location of the downloaded images
 		self.inputDirectory = self.outputDirectory.getPath() + "\\originalImages\\"
+		self.inputDirectory = File(self.inputDirectory)
 		self.inputDirectory.mkdirs()
 		# Save each image in the file
-		for image in self.readURLList(filename):
-			IJ.save(image, self.inputDirectory + image.getTitle())
-
+		for line in open(filename):
+			try:
+				path = self.inputDirectory.getPath().replace("\\","/") + '/' + line[line.rfind('/') + 1:].replace("/","//")
+				urllib.urlretrieve(line.strip(), path.strip())
+			except:
+				# JAVA 7 and below will not authenticate with SSL Certificates of length 1024 and above
+				# no workaround I can see as fiji uses its own version of java
+				print "unable to access server"
 	# returns an array of ImageJ image objects
 	def readURLList(self, filename):
 		f, images = open(filename, 'r'), []
