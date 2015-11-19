@@ -56,6 +56,19 @@ path <- paste0(getwd(), "/")
 file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
+  
+  #Add a column specifying ct or xray
+data$Image.Type <- ""
+#Create data frames based on CT in the Image.Name variable
+CT_Data <-data[grep("-ct-", data$Image.Name, ignore.case = TRUE), ]
+#Change row in Image Type to CT
+CT_Data$Image.Type = "CT"
+#Create data frames based on XRAY in the Image.Name variable
+XRay_Data <- data[grep("-xr-", data$Image.Name, ignore.case = TRUE),]
+#Change row in Image Type to XRAY
+XRay_Data$Image.Type = "XRAY"
+#Merge two tables and changes back into the original data frame with the new column filled
+data <- rbind(CT_Data, XRay_Data)
 ```
 
 
@@ -79,7 +92,6 @@ for(x in 1: length(dfs)){
   colnames(dfs[[x]])[1]
   dfs[[x]]$fromDF <- df.name
 }
-combDF <- do.call(rbind,dfs)
 ```
 
 
