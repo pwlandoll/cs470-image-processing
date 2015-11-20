@@ -755,21 +755,24 @@ class ImageProcessorMenu:
 				# JAVA 7 and below will not authenticate with SSL Certificates of length 1024 and above
 				# no workaround I can see as fiji uses its own version of java
 				print "unable to access server"
-	# returns an array of ImageJ image objects
-	def readURLList(self, filename):
-		f, images = open(filename, 'r'), []
-		for line in f:
-			# TODO: Add some verification of the URL
-			images.append(IJ.openImage(line))
-		f.close()
-		return images
 
+	# Runs the R script selected by the user
+	# If no R script was selected, do nothing
 	def runRScript(self, scriptFilename):
-		if not self.rcommand:
-			findR(False)
-		if self.rcommand[0:1] == '"':
-			scriptFilename = '"' + scriptFilename.getPath() + '"'
-		os.system("%s %s" % (self.rcommand, scriptFilename))
+
+		if scriptFilename.getPath() != None:
+			# If the path to Rscript is not set, set it
+			if not self.rcommand:
+				findR(False)
+	
+			# Checks if the path to RScript includes a quote as the first character
+			# If it does, then the scriptFilename must be encapsulated in quotes
+			# This is necessary for filepaths with spaces in them in windows
+			if self.rcommand[0:1] == '"':
+				scriptFilename = '"' + scriptFilename.getPath() + '"'
+	
+			# Runs the command line command to execute the r script
+			os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -808,9 +811,9 @@ class ImageProcessorMenu:
 		if not (self.rScriptSelectTextfield.getText() == "Select R Script"):
 			rScript = File(self.rScriptDirectory.getPath())
 
-		#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
-		if not (self.validateUserInput(self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
-			return
+			#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
+			if not (self.validateUserInput(self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
+				return
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
@@ -856,7 +859,7 @@ class ImageProcessorMenu:
 		# Checks that there is another image to process
 		if self.index < len(self.pictures):
 			# Increase the progress bar's value
-			self.macroMenu.setProgressBarValue(int(((self.index + 1.0) / len(self.pictures)) * 100))
+			self.macroMenu.setProgressBarValue(int(((self.index) / len(self.pictures)) * 100))
 
 			# Image to process
 			file = self.pictures[self.index]
@@ -970,6 +973,11 @@ class ImageProcessorMenu:
 
 	#Copies the original image from the existing directory to the newly created one
 	def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
+		# This code should handle any filetype, not just ones supported by imagej natively
+		#try:
+		#	shutil.copy(sourcePath, destinationPath)
+		#except:
+		#	"some error"
 		img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave.getName())
 		IJ.save(img, outputDir.getPath() + "//" + fileToSave.getName())
 		img.close()
