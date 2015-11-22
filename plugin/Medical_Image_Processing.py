@@ -89,7 +89,7 @@ class ImageProcessorMenu:
 	def __init__(self):
 		# String of accepted file types for use throughout application
 		# TODO: Update the list of valid image types
-		self.validFileExtensionsString = ".jpg, .png, .tif, .dcm, .gif"
+		self.validFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
 		# path for the stored text file
 		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
 
@@ -434,24 +434,18 @@ class ImageProcessorMenu:
 			# Inserts in import function if the user did not use one
 			if fileContents.find("Bio-Formats Importer") == -1 and fileContents.find("open(") == -1:
 				# Import the image using the bio-formats importer
-				importCode = ('run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
-							  'if(is("composite") == 1){'
-							  	  # Merge the image into one channel, instead of three seperate red, green, and blue channels
-								  'run("Stack to RGB");'
-								  # Remember the id of the new image
-								  'selectedImage = getImageID();'
-								  # Close the seperate channel file
-								  'for (i=0; i < nImages; i++){ '
-								  	'selectImage(i+1);'
-								  	'if(!(selectedImage == getImageID())){'
-								  		'close();'
-								  		'i = i - 1;'
-								  	'}'
+				importCode = ('IJ.redirectErrorMessages();'
+							  'open("INPUTPATH");'
+							  'if(nImages < 1){'
+								  'run("Bio-Formats Importer", "open=[INPUTPATH] autoscale color_mode=Default view=Hyperstack stack_order=XYCZT");'
+								  'if(is("composite") == 1){'
+								  	  # Merge the image into one channel, instead of three seperate red, green, and blue channels
+									  'run("Stack to RGB");'
+									  # Close the old image with seperate channels
+									  'close("\\Others");'
+									  # Rename window the file name (removes (RGB) from the end of the file window)
+									  'rename(getInfo("image.filename"));'
 								  '}'
-								  # Reselect the new image
-								  'selectImage(selectedImage);'
-								  # Rename window the file name (removes (RGB) from the end of the file window)
-								  'rename(getInfo("image.filename"));'
 							  '}')
 
 				fileContents = importCode + fileContents
@@ -561,16 +555,9 @@ class ImageProcessorMenu:
 								'}'
 							'}')
 			fileContents = functionToSave + fileContents
-				
-			# Inserts a save results function if a results window is open and the user did not save it
-			if fileContents.find('saveAs("Results"') == -1:
-				fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\");saveAs(\"Results\", \"FILEPATH\\\\Results.csv\");}"
 
 			# Closes any open images
 			fileContents = fileContents + 'if(nImages != 0){for (i=0; i < nImages; i++){selectImage(i+1);close();i=i-1;}'
-
-			# Closes the results window if one opens
-			fileContents = fileContents + "if (isOpen(\"Results\")) { selectWindow(\"Results\"); run(\"Close\");}"
 
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
@@ -759,20 +746,18 @@ class ImageProcessorMenu:
 	# Runs the R script selected by the user
 	# If no R script was selected, do nothing
 	def runRScript(self, scriptFilename):
+		# If the path to Rscript is not set, set it
+		if not self.rcommand:
+			findR(False)
 
-		if scriptFilename.getPath() != None:
-			# If the path to Rscript is not set, set it
-			if not self.rcommand:
-				findR(False)
-	
-			# Checks if the path to RScript includes a quote as the first character
-			# If it does, then the scriptFilename must be encapsulated in quotes
-			# This is necessary for filepaths with spaces in them in windows
-			if self.rcommand[0:1] == '"':
-				scriptFilename = '"' + scriptFilename.getPath() + '"'
-	
-			# Runs the command line command to execute the r script
-			os.system("%s %s" % (self.rcommand, scriptFilename))
+		# Checks if the path to RScript includes a quote as the first character
+		# If it does, then the scriptFilename must be encapsulated in quotes
+		# This is necessary for filepaths with spaces in them in windows
+		if self.rcommand[0:1] == '"':
+			scriptFilename = '"' + scriptFilename.getPath() + '"'
+
+		# Runs the command line command to execute the r script
+		os.system("%s %s" % (self.rcommand, scriptFilename))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -859,7 +844,7 @@ class ImageProcessorMenu:
 		# Checks that there is another image to process
 		if self.index < len(self.pictures):
 			# Increase the progress bar's value
-			self.macroMenu.setProgressBarValue(int(((self.index) / len(self.pictures)) * 100))
+			self.macroMenu.setProgressBarValue(int(((self.index * 1.0) / len(self.pictures)) * 100))
 
 			# Image to process
 			file = self.pictures[self.index]
@@ -934,7 +919,11 @@ class ImageProcessorMenu:
 			self.frame.setVisible(True)
 			self.macroMenu.disposeMenu()
 
-			self.runRScript(self.rScriptDirectory)
+			# Run the R script if one has been selected
+			try:
+				self.runRScript(self.rScriptDirectory)
+			except AttributeError:
+				print "No R Script Selected"
 			
 
 	#Creates a generic dialog window to display error messages
@@ -973,14 +962,10 @@ class ImageProcessorMenu:
 
 	#Copies the original image from the existing directory to the newly created one
 	def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
-		# This code should handle any filetype, not just ones supported by imagej natively
-		#try:
-		#	shutil.copy(sourcePath, destinationPath)
-		#except:
-		#	"some error"
-		img = IJ.openImage(self.inputDirectory.getPath() + "\\" + fileToSave.getName())
-		IJ.save(img, outputDir.getPath() + "//" + fileToSave.getName())
-		img.close()
+		try:
+			shutil.copy(self.inputDirectory.getPath() + "\\" + fileToSave.getName(), outputDir.getPath() + "//" + fileToSave.getName())
+		except:
+			"some error"
 
 	#Gets values from file specification components within the JPanel and returns images based on user's specifications
 	def getImagesBasedOnUserFileSpecications(self, images):
