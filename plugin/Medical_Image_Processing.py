@@ -745,7 +745,7 @@ class ImageProcessorMenu:
 
 	# Runs the R script selected by the user
 	# If no R script was selected, do nothing
-	def runRScript(self, scriptFilename):
+	def runRScript(self, scriptFilename, outputDirectory):
 		# If the path to Rscript is not set, set it
 		if not self.rcommand:
 			findR(False)
@@ -755,9 +755,10 @@ class ImageProcessorMenu:
 		# This is necessary for filepaths with spaces in them in windows
 		if self.rcommand[0:1] == '"':
 			scriptFilename = '"' + scriptFilename.getPath() + '"'
+			outputDirectory = '"' + outputDirectory.getPath() + '"'
 
 		# Runs the command line command to execute the r script
-		os.system("%s %s" % (self.rcommand, scriptFilename))
+		os.system("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -921,7 +922,7 @@ class ImageProcessorMenu:
 
 			# Run the R script if one has been selected
 			try:
-				self.runRScript(self.rScriptDirectory)
+				self.runRScript(self.rScriptDirectory, self.outputDirectory)
 			except AttributeError:
 				print "No R Script Selected"
 			
