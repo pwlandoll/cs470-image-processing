@@ -79,21 +79,46 @@ for(x in 1: length(dfs)){
   dfs[[x]]$fromDF <- df.name
 }
 
-#plotCompare function will compare two variables from one dataframe
-#See breakdown below
-plotCompare <- function(label, xVar, xString, yVar, yString){
+# Kernel density plots 
+# grouped by CT and XRay
+densityPlot<- function(dataFrame, Variable, VariableLabel, Fill){
+  library(ggplot2)
+  plot <- qplot(Variable, data=dataFrame, geom="density", fill=Fill, alpha=I(.5),
+        xlab = VariableLabel)
+  ggsave(filename = paste0(VariableLabel, "_DensityPlot", curTime, ".jpg", sep = ""), plot = plot)
+}
+with(data_merge, densityPlot(data_merge,StdDev, "StdDev", Image.Type))
+with(data_merge, densityPlot(data_merge,Skew, "Skew", Image.Type))
+with(data_merge, densityPlot(data_merge,X.Area,"X.Area", Image.Type))
+
+#Scatterplot
+scatterPlot <- function(label,xVar, xString, yVar, yString){
+  library(ggplot2)
   #Will specify CT or XRay
   label_1 <- label[[1]]
-  #Return the index of the column that matches the inputted string
-  #Will print the colnames matching that index
-  xVar_Label <- colnames(data)[which(colnames(data)==xString)]
-  yVar_Label <- colnames(data)[(colnames(data)==yString)]
-  jpeg(paste0(label_1,"_", xVar_Label, " vs ", yVar_Label, "_Basic Plot_", curTime, ".jpg", sep=""))
-  plot(xVar,yVar)
-  dev.off()
+  plot <- qplot(xVar, yVar, xlab = xString, ylab = yString) 
+  ggsave(filename = paste(label_1,"_", xString, " vs ", yString, "_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
-#Plot Compare Breakdown: User will alter these variables passed in
-#with(DataFrame being used, 
-#plotCompare(Specified CT or XRay, First Variable, First Variable String, Second Variable,Second Variable String))
-with(CT_Data, plotCompare(Image.Type,StdDev, "StdDev", Mean, "Mean"))
-with(XRay_Data, plotCompare(Image.Type,StdDev, "StdDev", Mean, "Mean"))
+with(CT_Data, scatterPlot(Image.Type,StdDev, "StdDev", Mean, "Mean"))
+with(XRay_Data, scatterPlot(Image.Type,StdDev, "StdDev", Mean, "Mean"))
+
+#Regression
+regressionPlot <- function(fillVar, xVar, xLabel, yVar, yLabel){
+  library(ggplot2)
+  plot <- qplot(xVar, yVar,geom=c("point", "smooth"), 
+        method="lm", formula=y~x, color=fillVar)
+ ggsave(filename = paste0(xLabel," vs ", yLabel, "_Regression", curTime, ".jpg", sep = ""), plot = plot)
+}
+
+with(data_merge, regressionPlot(Image.Type,StdDev, "StdDev", Mean, "Mean"))
+
+# Boxplot
+# observations (points) are overlayed and jittered
+boxPlot <- function(xVar, xLabel, yVar, yLabel){
+  library(ggplot2)
+  plot <- qplot(xVar, yVar,geom=c("boxplot", "jitter"), 
+        fill=xVar, ylab = yLabel, xlab = "")
+  ggsave(filename = paste0(xLabel, " vs ", yLabel, "_BoxPlot", curTime, ".jpg", sep = ""), plot = plot)
+}
+  with(data_merge, boxPlot(Image.Type, "Image Type", StdDev, "StdDev"))
+  with(data_merge, boxPlot(Image.Type, "Image Type", StdDev, "Mean"))
