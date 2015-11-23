@@ -122,3 +122,10 @@ boxPlot <- function(xVar, xLabel, yVar, yLabel){
 }
   with(data_merge, boxPlot(Image.Type, "Image Type", StdDev, "StdDev"))
   with(data_merge, boxPlot(Image.Type, "Image Type", StdDev, "Mean"))
+  
+scatterplotMatrix<- function(){
+  jpeg(paste("Merged Data Matrices", curTime, ".jpg", sep=""))
+  pairs(data_merge[,2:5],col=factor(data_merge$Image.Type))
+  dev.off()
+}
+scatterplotMatrix()
