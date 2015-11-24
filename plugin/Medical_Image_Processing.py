@@ -357,6 +357,8 @@ class ImageProcessorMenu:
 				# Creates a prompt asking the user of the name of the file used in creating the original macro
 				result = JOptionPane.showInputDialog(frame, "Enter image name used to create macro (including extension):");
 				if result != None:
+					if result[-4:]!= ".ijm":
+						result = result + ".ijm"
 					self.generalize(chooseFile.getSelectedFile(), result)
 
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
