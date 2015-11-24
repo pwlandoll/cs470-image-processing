@@ -394,10 +394,10 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH/\1IMAGENAME]", fileContents)
 
 			# Replace the save results directory path with FILEPATH
-			#fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
+			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
 
 			# Replace the save text directory path with FILEPATH
-			#fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH/../', fileContents)
+			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH/../', fileContents)
 
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
