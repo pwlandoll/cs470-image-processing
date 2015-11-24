@@ -1,6 +1,7 @@
 import os
 import re
 import urllib
+import subprocess
 
 from ij import IJ
 from ij import Menus
@@ -750,14 +751,14 @@ class ImageProcessorMenu:
 		if not self.rcommand:
 			findR(False)
 
+		path = scriptFilename.getPath()
 		# Checks if the path to RScript includes a quote as the first character
 		# If it does, then the scriptFilename must be encapsulated in quotes
 		# This is necessary for filepaths with spaces in them in windows
 		if self.rcommand[0:1] == '"':
-			scriptFilename = '"' + scriptFilename.getPath() + '"'
-
+			path = '"' + scriptFilename.getPath() + '"'
 		# Runs the command line command to execute the r script
-		os.system("%s %s" % (self.rcommand, scriptFilename))
+		subprocess.call("%s %s" % (self.rcommand, path))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
