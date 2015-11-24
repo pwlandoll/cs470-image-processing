@@ -48,6 +48,7 @@ from javax.swing import JSeparator
 from javax.swing import SwingConstants
 from javax.swing.border import Border
 from javax.swing.filechooser import FileNameExtensionFilter
+
 from java.util import Scanner
 
 from loci.plugins import BF
@@ -393,10 +394,10 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH/\1IMAGENAME]", fileContents)
 
 			# Replace the save results directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
+			#fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
 
 			# Replace the save text directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH/../', fileContents)
+			#fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH/../', fileContents)
 
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
@@ -711,11 +712,9 @@ class ImageProcessorMenu:
 					self.macroSelectTextfield.setText(savedFilePath)
 				elif directoryType == "R Path":
 					self.rcommand = savedFilePath
-					
-				#TODO instantiate after R Script functionality is implemented
-				#elif directoryType == "R Script":
-				#	self.rScriptDirectory = file.getPath() 
-				#	self.rScriptSelectTextfield.setText(savedFilePath)
+				elif directoryType == "R Script":
+					self.rScriptDirectory = file.getPath() 
+					self.rScriptSelectTextfield.setText(savedFilePath)
 					
 				self.shouldEnableStart()
 
@@ -773,7 +772,8 @@ class ImageProcessorMenu:
 			outputDirectory = '"' + outputDirectory.getPath() + '"'
 
 		# Runs the command line command to execute the r script
-		subprocess.call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory))
+		# shell=True parameter necessary for *nix systems
+		subprocess.call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory), shell = True)
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -1049,10 +1049,10 @@ class ImageProcessorMenu:
 		contents = contents + "outputPath\t" + self.outputDirectory.getPath() + "\r\n"
 		contents = contents + "macroPath\t" + self.macroDirectory.getPath() + "\r\n"
 
-		#if not(self.rScriptDirectory is None):
-		#	contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
-		#else:	
-		#	contents = contents + "rScriptPath\t\r\n"
+		if not(self.rScriptDirectory is None):
+			contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
+		else:	
+			contents = contents + "rScriptPath\t\r\n"
 		
 		writer.write(contents)
 		writer.close()
@@ -1099,7 +1099,7 @@ class ImageProcessorMenu:
 		#Populate Macro File Path
 		self.setDirectory("Macro File", paths['macroPath'])
 		#Populate R Script Path
-		#self.setDirectory("R Script", paths['rScriptPath'])
+		self.setDirectory("R Script", paths['rScriptPath'])
 		
 		self.shouldEnableStart()
 
