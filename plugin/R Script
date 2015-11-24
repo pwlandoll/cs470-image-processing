@@ -37,13 +37,6 @@ file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
 
-#Create a new data frame based on if the word area is found in any of the columns
-#If this is the case, a new data frame will be created based on those area columns
-areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
-sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
-summary(areaCol)
-sink(NULL)
-
 #Add a column specifying ct or xray
 data$Image.Type <- ""
 
@@ -140,4 +133,11 @@ scatterplotMatrix()
 
 sink(file=paste0("Complete Data Summary_",curTime, ".txt", sep = "")) 
 summary(data_merge)
+sink(NULL)
+
+#Create a new data frame based on if the word area is found in any of the columns
+#If this is the case, a new data frame will be created based on those area columns
+areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
+sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
+summary(areaCol)
 sink(NULL)
