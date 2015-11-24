@@ -756,7 +756,7 @@ class ImageProcessorMenu:
 
 	# Runs the R script selected by the user
 	# If no R script was selected, do nothing
-	def runRScript(self, scriptFilename):
+	def runRScript(self, scriptFilename, outputDirectory):
 		# If the path to Rscript is not set, set it
 		if not self.rcommand:
 			findR(False)
