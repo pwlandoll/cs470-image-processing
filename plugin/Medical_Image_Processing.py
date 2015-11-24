@@ -276,7 +276,7 @@ class ImageProcessorMenu:
 		else:
 			rcmd = None
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
-			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:\\Program Files\\R" 
+			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:/Program Files/R" 
 			if os.path.exists(osxdir) and not change:
 				rcmd = osxdir
 			elif os.path.exists(linuxdir) and not change:
@@ -284,7 +284,7 @@ class ImageProcessorMenu:
 			elif os.path.exists(windowsdir) and not change:
 				# set the R command to the latest version in the C:\Program Files\R folder
 				try:
-					rcmd = '"' + windowsdir + "\\" + os.listdir(windowsdir)[-1] + '\\bin\\Rscript.exe"'
+					rcmd = '"' + windowsdir + "/" + os.listdir(windowsdir)[-1] + '/bin/Rscript.exe"'
 				except IndexError:
 					# If the R directory exists, but has no subdirectories, then an IndexError happens
 					# We don't care at this point, we'll just pass it over without setting rcmd.
@@ -386,34 +386,34 @@ class ImageProcessorMenu:
 			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
 
 			# Replace the bio-formats exporter directory path with FILEPATH
-			fileContents = re.sub(r"save=[^\s\"]*\\",r"save=FILEPATH\\", fileContents)
+			fileContents = re.sub(r"save=[^\s\"]*\\",r"save=FILEPATH/", fileContents)
 
 			# Replace the bio-formats exporter directory path with FILPEPATH followed by text used to inidcate
 			# 	what processing was done on the image and IMAGENAME
-			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH\\\\\1IMAGENAME]", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH/\1IMAGENAME]", fileContents)
 
 			# Replace the save results directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH\\\\..\\\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
 
 			# Replace the save text directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH\\\\..\\\\', fileContents)
+			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH/../', fileContents)
 
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
 
 			# Do not believe this is necessary, will keep till tested
-			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH\\\\\1NOEXTENSION\2]", fileContents)
+			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH/\1NOEXTENSION\2]", fileContents)
 
 			# Replace all paths found in the open command with INPUTPATH\\IMAGENAME
-			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH\\\\IMAGENAME"', fileContents)
+			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH/IMAGENAME"', fileContents)
 
 			# Replace all paths found using run("save") with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
-			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH\\\\\1IMAGENAME]"', fileContents)
-			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH\\\\\1NOEXTENSION\2]"', fileContents)
+			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH/\1IMAGENAME]"', fileContents)
+			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)NOEXTENSION([^"]*)"', 'run("Save", "save=[FILEPATH/\1NOEXTENSION\2]"', fileContents)
 
 			# Replace all paths found using saveAs with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
-			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH\\\\\2IMAGENAME")', fileContents)
-			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH\\\\\2NOEXTENSION\3")', fileContents)
+			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH/\2IMAGENAME")', fileContents)
+			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH/\2NOEXTENSION\3")', fileContents)
 
 			# Inserts code to save the images if no save commands are found in the original macro file
 			if fileContents.find("Bio-Formats Exporter") == -1 and fileContents.find("saveAs(") == -1 and fileContents.find('run("Save"') == -1:
@@ -488,7 +488,7 @@ class ImageProcessorMenu:
 									'}'
 									'selectWindow("Results");'
 									# Strip the extension from the file name and save the results as the imagename.csv
-									'saveAs("Results", "FILEPATH\\\\..\\\\" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+									'saveAs("Results", "FILEPATH/../" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
 									# Close the results window
 									'run("Close");'
 								'}'
@@ -526,14 +526,14 @@ class ImageProcessorMenu:
 										'}'
 										'title = getSaveName(title);'
 										# If file doesn't exist, save it
-										'if(File.exists("FILEPATH\\\\" + title) != 1){'
-											'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+										'if(File.exists("FILEPATH/" + title) != 1){'
+											'run("Bio-Formats Exporter", "save=[FILEPATH/" + title + "]" + " export compression=Uncompressed");'
 											'setOption("Changes", false);'
 										'}'
 										# If changes have been made to the image, save it
 										'if(is("changes")){'
 											'title = command + "_" + title;'
-											'if(File.exists("FILEPATH\\\\" + title) == 1){'
+											'if(File.exists("FILEPATH/" + title) == 1){'
 												# Name without extension
 												'name = substring(title, 0, indexOf(title,"."));'
 												# Filename counter
@@ -541,15 +541,15 @@ class ImageProcessorMenu:
 												# File extension
 												'ext = substring(title, indexOf(title, "."));'
 												# While the file exists, increment the counter to produce a different name
-												'while(File.exists("FILEPATH\\\\" + name + "(" + titleIteration + ")" + ext) == 1){'
+												'while(File.exists("FILEPATH/" + name + "(" + titleIteration + ")" + ext) == 1){'
 													'titleIteration = titleIteration + 1;'
 												'}'
 												# Name of the file to export
 												'title = name + "(" + titleIteration + ")" + ext;'
-												'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+												'run("Bio-Formats Exporter", "save=[FILEPATH/" + title + "]" + " export compression=Uncompressed");'
 											'}'
 											'else{'
-												'run("Bio-Formats Exporter", "save=[FILEPATH\\\\" + title + "]" + " export compression=Uncompressed");'
+												'run("Bio-Formats Exporter", "save=[FILEPATH/" + title + "]" + " export compression=Uncompressed");'
 											'}'
 											# Change the name of the image in the List
 											'List.set(imageID, title);'
@@ -741,7 +741,7 @@ class ImageProcessorMenu:
 	# Downloads each image in the file of image urls
 	def downloadFiles(self, filename):
 		# Make the input directory the location of the downloaded images
-		self.inputDirectory = self.outputDirectory.getPath() + "\\originalImages\\"
+		self.inputDirectory = self.outputDirectory.getPath() + "/originalImages/"
 		self.inputDirectory = File(self.inputDirectory)
 		self.inputDirectory.mkdirs()
 		# Save each image in the file
@@ -895,9 +895,9 @@ class ImageProcessorMenu:
 
 				# Replace all the generalized strings with specifics
 				fileContents = fileContents.replace("INPUTPATH", file.getPath().replace("\\","\\\\"))
-				fileContents = fileContents.replace("FILEPATH", outputDir.getPath().replace("\\","\\\\"))
-				fileContents = fileContents.replace("IMAGENAME", file.getName().replace("\\","\\\\"))
-				fileContents = fileContents.replace("NOEXTENSION", fileName.replace("\\","\\\\"))
+				fileContents = fileContents.replace("FILEPATH", outputDir.getPath().replace("\\","/"))
+				fileContents = fileContents.replace("IMAGENAME", file.getName().replace("\\","/"))
+				fileContents = fileContents.replace("NOEXTENSION", fileName.replace("\\","/"))
 				fileContents = fileContents.replace('run("View Step")','waitForUser("Press ok to continue")')
 
 			except IOException:
@@ -976,7 +976,7 @@ class ImageProcessorMenu:
 	#Copies the original image from the existing directory to the newly created one
 	def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
 		try:
-			shutil.copy(self.inputDirectory.getPath() + "\\" + fileToSave.getName(), outputDir.getPath() + "//" + fileToSave.getName())
+			shutil.copy(self.inputDirectory.getPath() + "/" + fileToSave.getName(), outputDir.getPath() + "/" + fileToSave.getName())
 		except:
 			"some error"
 
