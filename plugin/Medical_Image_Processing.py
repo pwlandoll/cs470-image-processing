@@ -442,8 +442,18 @@ class ImageProcessorMenu:
 								  'if(is("composite") == 1){'
 								  	  # Merge the image into one channel, instead of three seperate red, green, and blue channels
 									  'run("Stack to RGB");'
-									  # Close the old image with seperate channels
-									  'close("\\Others");'
+									  # Remember the id of the new image
+									  'selectedImage = getImageID();'
+									  # Close the seperate channel images
+									  'for (i=0; i < nImages; i++){ '
+									  	'selectImage(i+1);'
+									  	'if(!(selectedImage == getImageID())){'
+									  		'close();'
+									  		'i = i - 1;'
+									  	'}'
+									  '}'
+									  # Reselect the new image
+									  'selectImage(selectedImage);'
 									  # Rename window the file name (removes (RGB) from the end of the file window)
 									  'rename(getInfo("image.filename"));'
 								  '}'
