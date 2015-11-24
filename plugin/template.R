@@ -1,5 +1,4 @@
-# Template R script
-setwd()
+setwd("~/CS 470")
 
 #Clear global enviornment
 rm(list = ls(all.names = TRUE))
@@ -40,10 +39,6 @@ file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
 
-#Function to set directory
-setDirectory <- function(location){
-  currentDirectory <- setwd(location)
-}
 
 # Create a subdirectory based on the curDate variable for saving plots.
 # (If today is 4/4/14, then a new folder will be created with that date and any work done on that day will be 
@@ -51,21 +46,29 @@ setDirectory <- function(location){
 # This way all the data has already been loaded into the global enviornment per the previous directory. 
 # Now all new plots will be saved to the new directory.
 dir.create(file.path(path,curDate), showWarnings = FALSE)
-setDirectory(paste(path,curDate,"/",sep = ""))
+setwd(paste(path,curDate,"/",sep = ""))
 getwd()
 
 
 # This function should return a proper list with all the data.frames as elements.
-# Has a new column added specifying which data frame it is from (labeling purposes)
 dfs <- Filter(function(x) is(x, "data.frame"), mget(ls()))
 dfNames <- names(dfs)
 for(x in 1: length(dfs)){
   df.name <- dfNames[x]
   print(df.name)
   colnames(dfs[[x]])[1]
+  # Has a new column created specifying which data frame it is from (labeling purposes)
   dfs[[x]]$fromDF <- df.name
 }
 
-sink(file=paste0("dataSummary_",curTime, ".txt", sep = "")) 
+#Create a text file summarizing the data from all the csv files
+sink(file=paste0("Complete Data Summary_",curTime, ".txt", sep = "")) 
 summary(data)
+sink(NULL)
+
+#Create a new data frame based on if the word area is found in any of the columns
+#If this is the case, a new data frame will be created based on those area columns
+areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
+sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
+summary(areaCol)
 sink(NULL)
