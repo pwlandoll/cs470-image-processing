@@ -1,7 +1,9 @@
+# Template R Script
+# Use this script to create custom R scripts
+# The call to checkPackage at the end can be changed to install a custom list of package
 
 #Clear global enviornment
 rm(list = ls(all.names = TRUE))
-
 
 # Retrieve Date and Time
 # Date will be used to create a new directory
@@ -9,8 +11,6 @@ rm(list = ls(all.names = TRUE))
 curDate <- Sys.Date()
 curDate_Time <- Sys.time()
 curTime <- format(Sys.time(), "%I_%M %p")
-
-
 
 # Function to install packages if not installed.
 # If you create a method that requires a different package along with the ones listed below, 
@@ -27,17 +27,14 @@ checkPackage <- function(x){
   }
 }
 
-#  Then try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
-
+outputDirectory <- commandArgs(trailingOnly = False)[1]
 
 # This is the code to read all csv files into R.
 # Create One data frame.
-path <- paste0(getwd(), "/")
+path <- paste0(outputDirectory, "/")
 file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
-
 
 # Create a subdirectory based on the curDate variable for saving plots.
 # (If today is 4/4/14, then a new folder will be created with that date and any work done on that day will be 
@@ -47,7 +44,6 @@ data <- do.call("rbind", lapply(file_list, function(x)
 dir.create(file.path(path,curDate), showWarnings = FALSE)
 setwd(paste(path,curDate,"/",sep = ""))
 getwd()
-
 
 # This function should return a proper list with all the data.frames as elements.
 dfs <- Filter(function(x) is(x, "data.frame"), mget(ls()))
@@ -71,3 +67,6 @@ areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
 sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
 summary(areaCol)
 sink(NULL)
+
+# Try/install packages...Insert any more packages that may be needed here
+checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
