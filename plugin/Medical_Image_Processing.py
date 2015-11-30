@@ -219,6 +219,11 @@ class ImageProcessorMenu:
 		changeRPath.setToolTipText("Specify The Location of RScript.exe (Contained in the R Installation Directory by Default)")
 		file.add(changeRPath)
 
+		# Create menu option to run the r script on the csv files in the output directory
+		runRWithoutImageProcessing = JMenuItem("Run R Script Without Processing Images", None, actionPerformed=self.runRWithoutImageProcessing)
+		runRWithoutImageProcessing.setToolTipText("Runs the selected R script on already created .csv files")
+		file.add(runRWithoutImageProcessing)
+
 		# Add the menu to the frame
 		menubar.add(file)
 		self.frame.setJMenuBar(menubar)
@@ -1102,6 +1107,19 @@ class ImageProcessorMenu:
 		self.setDirectory("R Script", paths['rScriptPath'])
 		
 		self.shouldEnableStart()
+
+	# TODO: Fix the infinite loop
+	def runRWithoutImageProcessing(self,event):
+		try:
+			if self.rScriptDirectory != None and self.outputDirectory != None:
+				self.runRScript(self.rScriptDirectory, self.outputDirectory)
+		except:
+			self.showErrorDialog("Error","Both an output directory and R script must be selected")
+			if self.outputDirectory == None:
+				self.setDirectory("Output",None)
+			if self.rScriptDirectory == None:
+				self.setDirectory("R Script",None)
+			self.runRWithoutImageProcessing(self)
 
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
