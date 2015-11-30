@@ -70,6 +70,7 @@ class DelimiterActionListener(ActionListener):
 		#Enable/Disable extension textfield based on selected delimiter
 		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
 
+
 # This plugin creates a menu to batch process images using imagej's macro files.
 # This pluign requires the user to have R installed on their machine.
 # This plugin requires the user to have created a macro file with imagej's macro recorder
@@ -264,7 +265,7 @@ class ImageProcessorMenu:
 				returnDictionary[split[0]] = split[1].strip()
 		pathFile.close()
 		return returnDictionary
-	
+
 	def findR(self, change):
 		# get rPath from the path file
 		# requires that the path file exists
@@ -702,7 +703,6 @@ class ImageProcessorMenu:
 				if (directoryType == "Input"):
 					self.inputDirectory = file
 					self.inputTextfield.setText(file.getPath())
-			
 					self.urlLocation = None
 				elif directoryType == "Output":
 					self.outputDirectory = file
@@ -715,7 +715,7 @@ class ImageProcessorMenu:
 				elif directoryType == "R Script":
 					self.rScriptDirectory = file.getPath() 
 					self.rScriptSelectTextfield.setText(savedFilePath)
-					
+
 				self.shouldEnableStart()
 
 	def shouldEnableStart(self):
@@ -739,7 +739,7 @@ class ImageProcessorMenu:
 			self.runMacro()
 		else:
 			self.showErrorDialog("ERROR - Directory Contains No Images", "Selected Directory is Empty.  Please Choose a Directory That Contains At Least One Image")
-		
+
 	# Downloads each image in the file of image urls
 	def downloadFiles(self, filename):
 		# Make the input directory the location of the downloaded images
@@ -818,7 +818,7 @@ class ImageProcessorMenu:
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
-		
+
 		#Returns images as specified by the user and adds them to a list
 		listOfPicturesBasedOnUserSpecs = self.getImagesBasedOnUserFileSpecications(listOfPictures)
 
@@ -832,7 +832,6 @@ class ImageProcessorMenu:
 		self.index = 0
 		self.process()
 
-		
 	#Reads in the macro file and stores it as a string to be modified during process
 	def readInMacro(self):
 		fileContents = ""
@@ -940,7 +939,6 @@ class ImageProcessorMenu:
 				self.runRScript(self.rScriptDirectory, self.outputDirectory)
 			except AttributeError:
 				print "No R Script Selected"
-			
 
 	#Creates a generic dialog window to display error messages
 	def showErrorDialog(self, title, message):
@@ -972,7 +970,6 @@ class ImageProcessorMenu:
 				errorTitle = "ERROR - Invalid R Path"
 				errorMessage = "Error: " + "'" + userInput[0] + "'" + " is Not the Correct File.  Please Ensure You Have Navigated to the R Installation Directory and Have Selected 'Rscript.exe'"
 
-			
 			self.showErrorDialog(errorTitle, errorMessage)
 		return isValid
 
@@ -1033,11 +1030,11 @@ class ImageProcessorMenu:
 	def updateUserPathFile(self):
 		# Path to the Medical_Image directory
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
-		
+
 		# Create the file to house the path
 		file = File(pluginDir + "/user_paths.txt")
 		writer = BufferedWriter(FileWriter(file))
-		
+
 		# Create the contents of the file
 		# rPath: Path to R.exe on the users system
 		# inputPath: Last used input directory path
@@ -1053,29 +1050,29 @@ class ImageProcessorMenu:
 			contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
 		else:	
 			contents = contents + "rScriptPath\t\r\n"
-		
+
 		writer.write(contents)
 		writer.close()
-		
+
 	#Gets text file containing user's last used file paths
 	def getUserPathFile(self):
 		directoryNames = ["rPath","inputPath", "outputPath", "macroPath"]
 		# Path to the Medical_Image directory
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
-		
+
 		# Get file containing user's saved file paths
 		file = File(pluginDir + "\user_paths.txt")
 		sc = Scanner(file, "UTF-8")
-		
+
 		#Append file contents to temporary string
 		filetxt = ""
 		while (sc.hasNext()):
 			filetxt = filetxt + sc.nextLine()
-			
+
 		#Replace directory names within string with * in order to correctly extract paths
 		for name in directoryNames:
 			filetxt = re.sub(name, "*", filetxt)
-			
+
 		#Split tmp string to array.  Each element represents a different path
 		paths = filetxt.split("*")
 
@@ -1100,7 +1097,7 @@ class ImageProcessorMenu:
 		self.setDirectory("Macro File", paths['macroPath'])
 		#Populate R Script Path
 		self.setDirectory("R Script", paths['rScriptPath'])
-		
+
 		self.shouldEnableStart()
 
 
