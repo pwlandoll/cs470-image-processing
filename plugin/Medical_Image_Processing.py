@@ -718,7 +718,7 @@ class ImageProcessorMenu:
 				elif directoryType == "R Path":
 					self.rcommand = savedFilePath
 				elif directoryType == "R Script":
-					self.rScriptDirectory = file.getPath() 
+					self.rScriptDirectory = file
 					self.rScriptSelectTextfield.setText(savedFilePath)
 					
 				self.shouldEnableStart()
@@ -1096,30 +1096,48 @@ class ImageProcessorMenu:
 		paths = self.readPathFile()		
 
 		#Populate R Path
-		self.setDirectory("R Path", paths['rPath'])
+		if paths['rPath'] != "":
+			self.setDirectory("R Path", paths['rPath'])
 		#Populate Input Directory Path
-		self.setDirectory("Input", paths['inputPath'])
+		if paths['inputPath'] != "":
+			self.setDirectory("Input", paths['inputPath'])
 		#Populate Output Directory Path
-		self.setDirectory("Output", paths['outputPath'])
+		if paths['outputPath'] != "":
+			self.setDirectory("Output", paths['outputPath'])
 		#Populate Macro File Path
-		self.setDirectory("Macro File", paths['macroPath'])
+		if paths['macroPath'] != "":
+			self.setDirectory("Macro File", paths['macroPath'])
 		#Populate R Script Path
-		self.setDirectory("R Script", paths['rScriptPath'])
+		if paths['rScriptPath'] != "":
+			self.setDirectory("R Script", paths['rScriptPath'])
 		
 		self.shouldEnableStart()
 
-	# TODO: Fix the infinite loop
+	# Runs the r script without having to process the images first
+	# requires both the r script directory and output directory
+	# If these are not set, will notify user, and prompt user for the locations
 	def runRWithoutImageProcessing(self,event):
 		try:
+			# If the rScriptDirectory and outputDirectory are set, run the r script
 			if self.rScriptDirectory != None and self.outputDirectory != None:
 				self.runRScript(self.rScriptDirectory, self.outputDirectory)
 		except:
+			# One of the two directories was not set, show user the error
 			self.showErrorDialog("Error","Both an output directory and R script must be selected")
-			if self.outputDirectory == None:
-				self.setDirectory("Output",None)
-			if self.rScriptDirectory == None:
-				self.setDirectory("R Script",None)
-			self.runRWithoutImageProcessing(self)
+			# If user clicks cancel on error message, don't continue
+			if not self.frameToDispose.wasCanceled():
+				# Checks if it was the output directory not set, if so prompt the user to set it
+				try:
+					self.outputDirectory
+				except:
+					self.setDirectory("Output",None)
+				# Checks if it was the r script directory not set, if so prompt the user to set it
+				try:
+					self.rScriptDirectory
+				except:
+					self.setDirectory("R Script",None)
+				# Run the method again
+				self.runRWithoutImageProcessing(self)
 
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
