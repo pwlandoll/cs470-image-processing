@@ -1,3 +1,4 @@
+import csv
 import os
 import re
 import urllib
@@ -223,6 +224,11 @@ class ImageProcessorMenu:
 		runRWithoutImageProcessing = JMenuItem("Run R Script Without Processing Images", None, actionPerformed=self.runRWithoutImageProcessing)
 		runRWithoutImageProcessing.setToolTipText("Runs the selected R script on already created .csv files")
 		file.add(runRWithoutImageProcessing)
+
+		# Create menu option to modify the default r script
+		basicRModifier = JMenuItem("Create basic R Script",None, actionPerformed=self.basicRModifier)
+		basicRModifier.setToolTipText("Load a csv file and select two categories to be used in a scatter plot")
+		file.add(basicRModifier)
 
 		# Add the menu to the frame
 		menubar.add(file)
@@ -1139,6 +1145,59 @@ class ImageProcessorMenu:
 				# Run the method again
 				self.runRWithoutImageProcessing(self)
 
+	# Prompts the user to select a .csv file
+	# Creates a frame that has two drop down menus, one for an x variable and one for a y variable
+	# Drop down menus are populated with the column names from the csv file
+	# Creates a basic R script using the selected variables
+	def basicRModifier(self,event):
+		chooseFile = JFileChooser()
+		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+		if chooseFile.showDialog(self.frame, "Select csv file") is not None:
+			if chooseFile.getSelectedFile().getPath()[-4:] == ".csv":
+				csvFile = open(chooseFile.getSelectedFile().getPath(), "rt")
+				try:
+					reader = csv.reader(csvFile)
+					columns = reader.next()
+					frame = JFrame("Create Basic R Script")
+					frame.setSize(400,150)
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
+					panel = JPanel()
+					panel.setBounds(10,10,400,150)
+					frame.add(panel)
+					xLabel = JLabel("X Variable:")
+					yLabel = JLabel("Y Variable:")
+					self.xComboBox = JComboBox()
+					self.yComboBox = JComboBox()
+					for column in columns:
+						self.xComboBox.addItem(column)
+						self.yComboBox.addItem(column)
+					self.xComboBox.setSelectedIndex(0)
+					self.yComboBox.setSelectedIndex(0)
+					button = JButton("Ok", actionPerformed=self.errorCheckSelected)
+					panel.add(xLabel)
+					panel.add(self.xComboBox)
+					panel.add(yLabel)
+					panel.add(self.yComboBox)
+					panel.add(button)
+					frame.add(panel)
+					frame.show()
+
+				except:
+					print "Error"
+			else:
+				self.showErrorDialog("Error","Must be a .csv file")
+				# If user clicks cancel on error message, don't continue
+				if not self.frameToDispose.wasCanceled():
+					self.basicRModifier(None)
+	def errorCheckSelected(self,event):
+		if self.xComboBox.getSelectedItem() == " " or self.yComboBox.getSelectedItem() == " ":
+			self.showErrorDialog("Error","Both an x and y variable must be selected")
+		else:
+			self.generateBasicRScript(self.xComboBox.getSelectedItem(), self.yComboBox.getSelectedItem())
+
+	# TODO: implement
+	def generateBasicRScript(self, xVariable, yVariable):
+		pass
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
 #	to create a custom close operation.
