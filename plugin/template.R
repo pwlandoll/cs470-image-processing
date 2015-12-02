@@ -27,11 +27,12 @@ checkPackage <- function(x){
   }
 }
 
-outputDirectory <- commandArgs(trailingOnly = False)[1]
+outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
 
 # This is the code to read all csv files into R.
 # Create One data frame.
-path <- paste0(outputDirectory, "/")
+path <- paste0(outputDirectory, "/", sep="")
+print(path)
 file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))

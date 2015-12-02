@@ -314,7 +314,8 @@ class ImageProcessorMenu:
 				chooseFile = JFileChooser()
 				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 				# TODO: Verify that the selected file is Rscript
-				if chooseFile.showDialog(self.frame, "Select") is not None:
+				ret = chooseFile.showDialog(self.frame, "Select")
+				if chooseFile.getSelectedFile() is not None and ret == JFileChoooser.APPROVE_OPTION:
 					rcmd = chooseFile.getSelectedFile().getPath()
 		self.rcommand = rcmd
 
@@ -364,6 +365,7 @@ class ImageProcessorMenu:
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
 
 		# If a file is chosen continue to allow user to choose where to save the generalized file
+		# TODO: combine statements
 		if chooseFile.getSelectedFile() is not None:
 			if ret == JFileChooser.APPROVE_OPTION:
 				frame = JFrame();
@@ -587,7 +589,7 @@ class ImageProcessorMenu:
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
 			if fileChooser.showSaveDialog(self.frame) == JFileChooser.APPROVE_OPTION:
-				path - fileChooser.getSelectedFile().getPath()
+				path = fileChooser.getSelectedFile().getPath()
 				if path[-4:] != ".ijm":
 					path = path + ".ijm"
 				newMacro = File(path)
@@ -1151,9 +1153,7 @@ class ImageProcessorMenu:
 		chooseFile = JFileChooser()
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 		ret = chooseFile.showDialog(self.frame, "Select csv file")
-		if ret == JFileChooser.APPROVE_OPTION:
-
-			print chooseFile
+		if chooseFile.getSelectedFile() is not None and ret == JFileChooser.APPROVE_OPTION:
 			if chooseFile.getSelectedFile().getPath()[-4:] == ".csv":
 				csvFile = open(chooseFile.getSelectedFile().getPath(), "rt")
 				try:
@@ -1182,7 +1182,6 @@ class ImageProcessorMenu:
 					panel.add(button)
 					frame.add(panel)
 					frame.show()
-
 				except:
 					print "Error"
 			else:
@@ -1190,6 +1189,7 @@ class ImageProcessorMenu:
 				# If user clicks cancel on error message, don't continue
 				if not self.frameToDispose.wasCanceled():
 					self.basicRModifier(None)
+
 	def errorCheckSelected(self,event):
 		if self.xComboBox.getSelectedItem() == " " or self.yComboBox.getSelectedItem() == " ":
 			self.showErrorDialog("Error","Both an x and y variable must be selected")
