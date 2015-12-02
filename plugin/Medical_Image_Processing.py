@@ -1,8 +1,8 @@
 import csv
 import os
 import re
-import urllib
 import subprocess
+import urllib
 
 from ij import IJ
 from ij import Menus
@@ -235,13 +235,14 @@ class ImageProcessorMenu:
 		menubar.add(file)
 		self.frame.setJMenuBar(menubar)
 
-		#Disable file extension textfield off the bat
+		# Disable file extension textfield off the bat
 		self.setExtensionTextfieldEnabled("All File Types")
 
 		# Show the frame, done last to show all components
 		self.frame.setResizable(False)
 		self.frame.setVisible(True)
-		# findR to be replaced with new setRPath method that will call findR
+
+		# Find the R executable
 		self.findR(False)
 
 	def checkPathFile(self):
