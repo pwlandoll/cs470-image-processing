@@ -210,11 +210,6 @@ class ImageProcessorMenu:
 		menubar = JMenuBar()
 		file = JMenu("File")
 
-		# Create an exit menu option, Will close all windows associated with fiji
-		fileExit = JMenuItem("Exit", None, actionPerformed=self.onExit)
-		fileExit.setToolTipText("Exit application")
-		file.add(fileExit)
-
 		# Create a generalize macro menu option
 		createGeneralMacro = JMenuItem("Create Generalized Macro File", None, actionPerformed=self.generalizePrompts)
 		createGeneralMacro.setToolTipText("Create a macro file that can be used in the processing pipeline using an existings macro file")
@@ -234,6 +229,16 @@ class ImageProcessorMenu:
 		basicRModifier = JMenuItem("Create basic R Script",None, actionPerformed=self.basicRModifier)
 		basicRModifier.setToolTipText("Load a csv file and select two categories to be used in a scatter plot")
 		file.add(basicRModifier)
+
+		#Create menu option to add file extensions to the list of accepted types
+		addAcceptedFileExtension = JMenuItem("Add Accepted File Extension...", None, actionPerformed=AddFileExtensionMenu)
+		addAcceptedFileExtension.setToolTipText("Add a Specified File Extension to the List of Accepted Types")
+		file.add(addAcceptedFileExtension)
+
+		# Create an exit menu option, Will close all windows associated with fiji
+		fileExit = JMenuItem("Exit", None, actionPerformed=self.onExit)
+		fileExit.setToolTipText("Exit application")
+		file.add(fileExit)
 
 		# Add the menu to the frame
 		menubar.add(file)
@@ -282,7 +287,7 @@ class ImageProcessorMenu:
 			tmp = ""
 			#Get extensions from file, concatenate to string
 			for line in file:
-			tmp = tmp + line
+				tmp = tmp + line
 			self.validFileExtensionsString = tmp
 			file.close()
 
