@@ -92,10 +92,14 @@ class ImageProcessorMenu:
 	# Constructor
 	def __init__(self):
 		# String of accepted file types for use throughout application
-		# TODO: Update the list of valid image types
-		self.validFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
+		self.defaultValidFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
+		#this will be set depending on the contents of the users acceptedFileExtensions.txt
+		self.validFileExtensionsString = ""
 		# path for the stored text file
 		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
+
+		#path for the stored accepted extension file
+		self.acceptedExtensionFile = IJ.getDir("plugins") + "Medical_Image/acceptedFileExtensions.txt"
 
 		# Create the menu frame with size of 450x400
 		frameWidth, frameHeight = 500, 400
@@ -244,6 +248,9 @@ class ImageProcessorMenu:
 
 		# Find the R executable
 		self.findR(False)
+		
+		#check if user has file containing accepted file extensions
+		self.checkAcceptedExtensionsFile()
 
 	def checkPathFile(self):
 		if not os.path.exists(self.pathFile):
@@ -255,6 +262,32 @@ class ImageProcessorMenu:
 			pathFile.write("rPath\t\r\n")
 			pathFile.write("rScriptPath\t\r\n")
 			pathFile.close()
+
+	#checks to see if the file Medical_Image/acceptedFileExtensions.txt exists within FIJI's plugins directory
+	def checkAcceptedExtensionsFile(self):
+		#File does not exist
+		if not os.path.exists(self.acceptedExtensionFile):
+			# Create the user path file, and write empty file paths
+			extFile = open(self.acceptedExtensionFile, "w")
+			#Get default accepted file extensions
+			defaultExtensions = self.defaultValidFileExtensionsString.split(',')
+			for ext in defaultExtensions:
+				extFile.write(ext.strip() + ", ")
+			self.validFileExtensionsString = self.defaultValidFileExtensionsString
+			extFile.close()
+		#File exists
+		else:
+			file = open(self.acceptedExtensionFile, "r")
+			#temporary string for concatenation of file contents
+			tmp = ""
+			#Get extensions from file, concatenate to string
+			for line in file:
+			tmp = tmp + line
+			self.validFileExtensionsString = tmp
+			file.close()
+
+		#Update tool tip text to reflect all valid file extensions
+		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
 
 	# TODO: Move readPathFile, findR, setRPath somewhere else?
 	# read in the data from the path file, return as a dictionary
@@ -1119,6 +1152,33 @@ class ImageProcessorMenu:
 
 		self.shouldEnableStart()
 
+	#adds selected extension(s) to the text file containing the lsit of accepted file types. Also updates the global list variable for valid file types.
+	def updateUserAcceptedExtensions(self,extensions):
+		# Path to the Medical_Image directory
+		pluginDir = IJ.getDir("plugins") + "Medical_Image"
+
+		#Create a txt file for log info
+		file = open(pluginDir + "/acceptedFileExtensions.txt", 'a')
+
+		for ext in extensions:
+			#boolean to indicate specified extension is already in the list - no need to add it again
+			duplicate = False
+			if ext.strip() in self.validFileExtensionsString:
+				duplicate = True
+			if not (duplicate):
+				#write extension to file
+				file.write(ext.strip() + ", ")
+
+				#add new extensions to global list
+				self.validFileExtensionsString = self.validFileExtensionsString + ", " + ext.strip()
+
+		#Update tool tip text to reflect all valid file extensions
+		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
+		#Close the file
+		file.close()
+
+	updateUserAcceptedExtensions = CallableWrapper(updateUserAcceptedExtensions)
+
 	# Runs the r script without having to process the images first
 	# requires both the r script directory and output directory
 	# If these are not set, will notify user, and prompt user for the locations
@@ -1199,6 +1259,53 @@ class ImageProcessorMenu:
 	# TODO: implement
 	def generateBasicRScript(self, xVariable, yVariable):
 		pass
+
+
+#Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
+class AddFileExtensionMenu():
+	#Gets the user's specified extension(s)
+	def getUserInput(self, event):
+		#Split each extension to array
+		extensions = self.addExtTextfield.getText().split(',')
+		ImageProcessorMenu.updateUserAcceptedExtensions(ImageProcessorMenu(), extensions)
+
+	#Window Constructor
+	def __init__(self, event):
+		#Create frame
+		frameWidth, frameHeight = 600, 300
+		self.addExtMenuFrame = JFrame("Add File Extension")
+		self.addExtMenuFrame.setSize(frameWidth, frameHeight)
+		self.addExtMenuFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
+
+		content = self.addExtMenuFrame.getContentPane()
+
+		# Add a panel to the frame
+		pnl = JPanel()
+		pnl.setBounds(10,10,frameWidth,frameHeight)
+		self.addExtMenuFrame.add(pnl)
+
+		# Add labels to prompt the user
+		self.promptUserLbl1 = JLabel("Enter All File Extensions That You Wish to Add to the List of Accepted File Extnensions Below.")
+		pnl.add(self.promptUserLbl1)
+		self.promptUserLbl2 = JLabel("Ensure that Each Extension is Comma-Seperated: ")
+		pnl.add(self.promptUserLbl2)
+
+		# Add a textfield to the frame to get the user's selected file extensions to add
+		self.addExtTextfield = JTextField()
+		self.addExtTextfield.setPreferredSize(Dimension(175,25))
+		self.addExtTextfield.setText("Example: .jpg, .png")
+		pnl.add(self.addExtTextfield)
+
+		# Add an 'Add' button to the frame to execute adding the specified extension to the accepted list
+		self.addExtBtn = JButton('Add', actionPerformed=self.getUserInput)
+		self.addExtBtn.setEnabled(True)
+		self.addExtBtn.setPreferredSize(Dimension(150,40))
+		pnl.add(self.addExtBtn)
+
+		#Show the frame and disable resizing of it
+		self.addExtMenuFrame.setResizable(False)
+		self.addExtMenuFrame.setVisible(True)
+
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
 #	to create a custom close operation.
