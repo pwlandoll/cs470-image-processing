@@ -1,3 +1,4 @@
+import csv
 import os
 import re
 import urllib
@@ -224,6 +225,11 @@ class ImageProcessorMenu:
 		runRWithoutImageProcessing = JMenuItem("Run R Script Without Processing Images", None, actionPerformed=self.runRWithoutImageProcessing)
 		runRWithoutImageProcessing.setToolTipText("Runs the selected R script on already created .csv files")
 		file.add(runRWithoutImageProcessing)
+
+		# Create menu option to modify the default r script
+		basicRModifier = JMenuItem("Create basic R Script",None, actionPerformed=self.basicRModifier)
+		basicRModifier.setToolTipText("Load a csv file and select two categories to be used in a scatter plot")
+		file.add(basicRModifier)
 
 		# Add the menu to the frame
 		menubar.add(file)
@@ -718,7 +724,7 @@ class ImageProcessorMenu:
 				elif directoryType == "R Path":
 					self.rcommand = savedFilePath
 				elif directoryType == "R Script":
-					self.rScriptDirectory = file.getPath() 
+					self.rScriptDirectory = file
 					self.rScriptSelectTextfield.setText(savedFilePath)
 
 				self.shouldEnableStart()
@@ -1093,31 +1099,102 @@ class ImageProcessorMenu:
 		paths = self.readPathFile()		
 
 		#Populate R Path
-		self.setDirectory("R Path", paths['rPath'])
+		if paths['rPath'] != "":
+			self.setDirectory("R Path", paths['rPath'])
 		#Populate Input Directory Path
-		self.setDirectory("Input", paths['inputPath'])
+		if paths['inputPath'] != "":
+			self.setDirectory("Input", paths['inputPath'])
 		#Populate Output Directory Path
-		self.setDirectory("Output", paths['outputPath'])
+		if paths['outputPath'] != "":
+			self.setDirectory("Output", paths['outputPath'])
 		#Populate Macro File Path
-		self.setDirectory("Macro File", paths['macroPath'])
+		if paths['macroPath'] != "":
+			self.setDirectory("Macro File", paths['macroPath'])
 		#Populate R Script Path
-		self.setDirectory("R Script", paths['rScriptPath'])
+		if paths['rScriptPath'] != "":
+			self.setDirectory("R Script", paths['rScriptPath'])
 
 		self.shouldEnableStart()
 
-	# TODO: Fix the infinite loop
+	# Runs the r script without having to process the images first
+	# requires both the r script directory and output directory
+	# If these are not set, will notify user, and prompt user for the locations
 	def runRWithoutImageProcessing(self,event):
 		try:
+			# If the rScriptDirectory and outputDirectory are set, run the r script
 			if self.rScriptDirectory != None and self.outputDirectory != None:
 				self.runRScript(self.rScriptDirectory, self.outputDirectory)
 		except:
+			# One of the two directories was not set, show user the error
 			self.showErrorDialog("Error","Both an output directory and R script must be selected")
-			if self.outputDirectory == None:
-				self.setDirectory("Output",None)
-			if self.rScriptDirectory == None:
-				self.setDirectory("R Script",None)
-			self.runRWithoutImageProcessing(self)
+			# If user clicks cancel on error message, don't continue
+			if not self.frameToDispose.wasCanceled():
+				# Checks if it was the output directory not set, if so prompt the user to set it
+				try:
+					self.outputDirectory
+				except:
+					self.setDirectory("Output",None)
+				# Checks if it was the r script directory not set, if so prompt the user to set it
+				try:
+					self.rScriptDirectory
+				except:
+					self.setDirectory("R Script",None)
+				# Run the method again
+				self.runRWithoutImageProcessing(self)
 
+	# Prompts the user to select a .csv file
+	# Creates a frame that has two drop down menus, one for an x variable and one for a y variable
+	# Drop down menus are populated with the column names from the csv file
+	# Creates a basic R script using the selected variables
+	def basicRModifier(self,event):
+		chooseFile = JFileChooser()
+		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
+		if chooseFile.showDialog(self.frame, "Select csv file") is not None:
+			if chooseFile.getSelectedFile().getPath()[-4:] == ".csv":
+				csvFile = open(chooseFile.getSelectedFile().getPath(), "rt")
+				try:
+					reader = csv.reader(csvFile)
+					columns = reader.next()
+					frame = JFrame("Create Basic R Script")
+					frame.setSize(400,150)
+					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
+					panel = JPanel()
+					panel.setBounds(10,10,400,150)
+					frame.add(panel)
+					xLabel = JLabel("X Variable:")
+					yLabel = JLabel("Y Variable:")
+					self.xComboBox = JComboBox()
+					self.yComboBox = JComboBox()
+					for column in columns:
+						self.xComboBox.addItem(column)
+						self.yComboBox.addItem(column)
+					self.xComboBox.setSelectedIndex(0)
+					self.yComboBox.setSelectedIndex(0)
+					button = JButton("Ok", actionPerformed=self.errorCheckSelected)
+					panel.add(xLabel)
+					panel.add(self.xComboBox)
+					panel.add(yLabel)
+					panel.add(self.yComboBox)
+					panel.add(button)
+					frame.add(panel)
+					frame.show()
+
+				except:
+					print "Error"
+			else:
+				self.showErrorDialog("Error","Must be a .csv file")
+				# If user clicks cancel on error message, don't continue
+				if not self.frameToDispose.wasCanceled():
+					self.basicRModifier(None)
+	def errorCheckSelected(self,event):
+		if self.xComboBox.getSelectedItem() == " " or self.yComboBox.getSelectedItem() == " ":
+			self.showErrorDialog("Error","Both an x and y variable must be selected")
+		else:
+			self.generateBasicRScript(self.xComboBox.getSelectedItem(), self.yComboBox.getSelectedItem())
+
+	# TODO: implement
+	def generateBasicRScript(self, xVariable, yVariable):
+		pass
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
 #	to create a custom close operation.
