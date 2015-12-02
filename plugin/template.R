@@ -72,3 +72,9 @@ sink(NULL)
 
 # Try/install packages...Insert any more packages that may be needed here
 checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
+
+#Will loop through data frame and plot the variables
+for ( i in seq(1,length( data ),1) )
+  jpeg(paste(names(data[i]), curTime, ".jpg", sep=""))
+  plot(data[,i],ylab=names(data[i]),type="l")
+  dev.off()
