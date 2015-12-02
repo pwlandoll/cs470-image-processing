@@ -1149,7 +1149,10 @@ class ImageProcessorMenu:
 	def basicRModifier(self,event):
 		chooseFile = JFileChooser()
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-		if chooseFile.showDialog(self.frame, "Select csv file") is not None:
+		ret = chooseFile.showDialog(self.frame, "Select csv file")
+		if ret == JFileChooser.APPROVE_OPTION:
+
+			print chooseFile
 			if chooseFile.getSelectedFile().getPath()[-4:] == ".csv":
 				csvFile = open(chooseFile.getSelectedFile().getPath(), "rt")
 				try:
