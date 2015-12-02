@@ -46,7 +46,6 @@ setwd(paste(path,curDate,"/",sep = ""))
 getwd()
 
 #Check if initial data frame is null. If that is the case the lines below will not run.
-if(!is.null(data)){
 # This function should return a proper list with all the data.frames as elements.
 dfs <- Filter(function(x) is(x, "data.frame"), mget(ls()))
 dfNames <- names(dfs)
@@ -72,4 +71,3 @@ sink(NULL)
 
 # Try/install packages...Insert any more packages that may be needed here
 checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
-}
