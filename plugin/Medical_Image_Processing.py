@@ -1,8 +1,7 @@
-import csv
 import os
 import re
-import subprocess
-import urllib
+
+from csv import reader
 
 from ij import IJ
 from ij import Menus
@@ -56,6 +55,10 @@ from java.util import Scanner
 from loci.plugins import BF
 
 from os.path import join
+
+from subprocess import call
+
+from urllib import urlretrieve
 
 
 #Wraps a method call to allow static methods to be called from ImageProcessorMenu
@@ -352,10 +355,20 @@ class ImageProcessorMenu:
 					JOptionPane.showMessageDialog(self.frame, message)
 				chooseFile = JFileChooser()
 				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-				# TODO: Verify that the selected file is Rscript
-				ret = chooseFile.showDialog(self.frame, "Select")
-				if chooseFile.getSelectedFile() is not None and ret == JFileChoooser.APPROVE_OPTION:
-					rcmd = chooseFile.getSelectedFile().getPath()
+				# Verify that the selected file is "Rscript" or "Rscript.exe"
+				notR = True
+				while notR:
+					ret = chooseFile.showDialog(self.frame, "Select")
+					if chooseFile.getSelectedFile() is not None and ret == JFileChooser.APPROVE_OPTION:
+						r = chooseFile.getSelectedFile().getPath()
+						if r[-7:] == "Rscript" or r[-11:] == "Rscript.exe":
+							rcmd = r
+							notR = False
+						else:
+							JOptionPane.showMessageDialog(self.frame, "The selected file must be Rscript or Rscript.exe")
+					# If 'cancel' is selected then the loop breaks
+					if ret != JFileChooser.APPROVE_OPTION:
+						notR = False
 		self.rcommand = rcmd
 
 	#Enables/Disables the file extension textfield based on the user's selected delimiter
@@ -803,7 +816,7 @@ class ImageProcessorMenu:
 		for line in open(filename):
 			try:
 				path = self.inputDirectory.getPath().replace("\\","/") + '/' + line[line.rfind('/') + 1:].replace("/","//")
-				urllib.urlretrieve(line.strip(), path.strip())
+				urlretrieve(line.strip(), path.strip())
 			except:
 				# JAVA 7 and below will not authenticate with SSL Certificates of length 1024 and above
 				# no workaround I can see as fiji uses its own version of java
@@ -827,9 +840,9 @@ class ImageProcessorMenu:
 		# Runs the command line command to execute the r script
 		# shell=True parameter necessary for *nix systems
 		LogStream.redirectSystem()
-		subprocess.call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory), shell = True)
+		call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory), shell = True)
 		if re.match(".*is not recognized.*",IJ.getLog()):
-			subprocess.call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory))
+			call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -1226,8 +1239,8 @@ class ImageProcessorMenu:
 			if chooseFile.getSelectedFile().getPath()[-4:] == ".csv":
 				csvFile = open(chooseFile.getSelectedFile().getPath(), "rt")
 				try:
-					reader = csv.reader(csvFile)
-					columns = reader.next()
+					csvreader = reader(csvFile)
+					columns = csvreader.next()
 					frame = JFrame("Create Basic R Script")
 					frame.setSize(400,150)
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
