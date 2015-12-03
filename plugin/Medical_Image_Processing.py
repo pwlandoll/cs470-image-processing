@@ -8,6 +8,7 @@ from ij import IJ
 from ij import Menus
 from ij import WindowManager
 from ij.gui import GenericDialog
+from ij.io import LogStream
 from ij.macro import Interpreter
 from ij.macro import MacroRunner
 
@@ -825,7 +826,10 @@ class ImageProcessorMenu:
 
 		# Runs the command line command to execute the r script
 		# shell=True parameter necessary for *nix systems
+		LogStream.redirectSystem()
 		subprocess.call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory), shell = True)
+		if re.match(".*is not recognized.*",IJ.getLog()):
+			subprocess.call("%s %s %s" % (self.rcommand, scriptFilename, outputDirectory))
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
@@ -1263,7 +1267,14 @@ class ImageProcessorMenu:
 
 	# TODO: implement
 	def generateBasicRScript(self, xVariable, yVariable):
-		pass
+		defaultR = open(IJ.getDir("plugins") + "Medical_Image/default.R", "r")
+		newR = ""
+		for line in defaultR:
+			if line[0:1] != "#":
+				newR = newR + line
+		out = open(IJ.getDir("plugins") + "Medical_Image/testing.R", "w")
+		out.write(newR)
+		out.close()
 
 
 #Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
