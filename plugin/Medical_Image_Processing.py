@@ -24,6 +24,7 @@ from java.io import File
 from java.io import FileReader
 from java.io import FileWriter
 from java.io import IOException
+import datetime
 
 from java.lang import System
 from java.lang import Thread
@@ -73,6 +74,21 @@ from urllib import urlretrieve
 #	They can then press start and it will perform the macro operation on all images found
 #	in the directory or in the text file. When finished the results will be fed into an R
 #	script for analyzing (need to implement)
+
+# Wraps a method call to allow static methods to be called from ImageProcessorMenu
+class CallableWrapper:
+	def __init__(self, any):
+		self.__call__ = any
+
+# ActionListener for DelimiterComboBox
+class DelimiterActionListener(ActionListener):
+	def actionPerformed(self,event):
+		# Get DelimiterComboBox object
+		box = event.getSource()
+		# Enable/Disable extension textfield based on selected delimiter
+		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
+
+# Main class
 class ImageProcessorMenu:
 
 	def __init__(self):
@@ -1074,17 +1090,17 @@ class ImageProcessorMenu:
 	def createLogFile(self, img, logFileDir, outputDir, fileContents):
 		# Create a txt file for log info
 		log = open(logFileDir, 'a')
-		log.write('Results for image: ' + img.getPath() + '\n')
+		log.write(str(datetime.datetime.now()) +' - Results for image: ' + img.getPath() + '\n')
 
 		# If the user has chosen to copy over the original image, record it in log file
 		if (self.copyImageToNewDirectoryCheckBox.isSelected()):
-				log.write('Copied image to: ' + outputDir.getPath() + '\n')
+				log.write(str(datetime.datetime.now()) +'Copied image to: ' + outputDir.getPath() + '\n')
 
 		# Append each processing operation to the log file
 		log.write('Process performed: ' + '\n')
 		operationsPerformed = fileContents.split(";")
 		for i in operationsPerformed:
-			log.write('\t' + i + '\n')
+			log.write('\t' + str(datetime.datetime.now()) + ' - ' + i + '\n')
 		log.write('\n')
 		log.write('\n')
 
@@ -1286,21 +1302,6 @@ class ImageProcessorMenu:
 		out.close()
 
 	### End of ImageProcessorMenu
-
-
-# Wraps a method call to allow static methods to be called from ImageProcessorMenu
-class CallableWrapper:
-	def __init__(self, any):
-		self.__call__ = any
-
-
-# ActionListener for DelimiterComboBox
-class DelimiterActionListener(ActionListener):
-	def actionPerformed(self,event):
-		# Get DelimiterComboBox object
-		box = event.getSource()
-		# Enable/Disable extension textfield based on selected delimiter
-		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
 
 
 # Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
