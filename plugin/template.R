@@ -27,7 +27,7 @@ checkPackage <- function(x){
   }
 }
 # Try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin", "methods") )
+checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "methods") )
 
 outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
 
