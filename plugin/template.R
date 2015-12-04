@@ -81,3 +81,16 @@ for ( i in seq(1,length( data ),1) ){
   dev.off()
   }
 }
+#Plot that includes coloring of points based on image variable
+for ( i in seq(1,length( data ),1) ){
+  #Plotting numerical data. Will only look for variables that are either integer or double
+  if(typeof(data[[i]]) == "integer" | typeof(data[[i]]) == "double"){
+  jpeg(paste("Numerical Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""), width = 1000, height = 600)
+  #Type B will output both points and lines. Require user to include base Image in their plot.
+  plot(data[,i],ylab=names(data[i]), type = "b", col = factor(data$Base.Image))
+  par(xpd=TRUE)
+#   legend('topright', legend = (factor(data$Base.Image)), 
+#          lty=1, col=factor(data$Base.Image), bty='n', cex=.75)
+  dev.off()
+  }
+}
