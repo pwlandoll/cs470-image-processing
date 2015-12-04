@@ -61,18 +61,18 @@ from subprocess import call
 from urllib import urlretrieve
 
 
-#Wraps a method call to allow static methods to be called from ImageProcessorMenu
+# Wraps a method call to allow static methods to be called from ImageProcessorMenu
 class CallableWrapper:
 	def __init__(self, any):
 		self.__call__ = any
 
 
-#ActionListener for DelimiterComboBox
+# ActionListener for DelimiterComboBox
 class DelimiterActionListener(ActionListener):
 	def actionPerformed(self,event):
-		#Get DelimiterComboBox object
+		# Get DelimiterComboBox object
 		box = event.getSource()
-		#Enable/Disable extension textfield based on selected delimiter
+		# Enable/Disable extension textfield based on selected delimiter
 		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
 
 
@@ -97,19 +97,20 @@ class ImageProcessorMenu:
 	def __init__(self):
 		# String of accepted file types for use throughout application
 		self.defaultValidFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
-		# this will be set depending on the contents of the users acceptedFileExtensions.txt
+		# This will be set depending on the contents of the users acceptedFileExtensions.txt
 		self.validFileExtensionsString = ""
-		#path for the stored accepted extension file
+		# Path for the stored accepted extension file
 		self.acceptedExtensionFile = IJ.getDir("plugins") + "Medical_Image/acceptedFileExtensions.txt"
 
-		# path for the stored text file
+		# Path for the stored text file
 		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
 
-		# Create the menu frame with size of 500x400
+		# Set frame size
 		frameWidth, frameHeight = 550, 350
-		# Set button width
+		# Set button size
 		buttonWidth, buttonHeight = 130, 25
 		
+		# Create frame
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(frameWidth, frameHeight)
 		self.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
@@ -162,19 +163,19 @@ class ImageProcessorMenu:
 		rScriptSelectButton.setPreferredSize(Dimension(buttonWidth, buttonHeight))
 		pnl.add(rScriptSelectButton)
 
-		#Add separator line for user friendliness
+		# Add separator line for user friendliness
 		sep = JSeparator(SwingConstants.HORIZONTAL)
 		sep.setPreferredSize(Dimension(frameWidth - 35,5))
 		pnl.add(sep)
 
-		#Save south-most panel as globally accessible object in order to iterate through pertinent components
+		# Save south-most panel as globally accessible object in order to iterate through pertinent components
 		ImageProcessorMenu.fileSpecificationsPanel = pnl
 
-		#Label for textfield below
+		# Label for textfield below
 		self.extensionLabel = JLabel("File Extensions:")
 		pnl.add(self.extensionLabel)
 
-		#ComboBox for selected file extension delimeter
+		# ComboBox for selected file extension delimeter
 		self.delimeterComboBox = JComboBox()
 		self.delimeterComboBox.addItem("All File Types")
 		self.delimeterComboBox.addItem("Include")
@@ -190,11 +191,11 @@ class ImageProcessorMenu:
 		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
 		pnl.add(self.extensionTextfield)
 
-		#Blank spaces for alignment purposes
+		# Blank spaces for alignment purposes
 		self.blankLbl = JLabel("     ")
 		pnl.add(self.blankLbl)
 
-		#Label for textfield below
+		# Label for textfield below
 		self.containsLabel = JLabel("File Name Contains:")
 		pnl.add(self.containsLabel)
 
@@ -202,7 +203,7 @@ class ImageProcessorMenu:
 		self.containsTextfield = JTextField(30)
 		pnl.add(self.containsTextfield)
 
-		#Add a checkbox which determines whether or not to copy the original image file(s) to the newly created directory/directories
+		# Add a checkbox which determines whether or not to copy the original image file(s) to the newly created directory/directories
 		self.copyImageToNewDirectoryCheckBox = JCheckBox("Copy Original Image(s) to Output Directory")
 		pnl.add(self.copyImageToNewDirectoryCheckBox)
 
@@ -226,7 +227,7 @@ class ImageProcessorMenu:
 		createGeneralMacro.setToolTipText("Create a macro file that can be used in the processing pipeline using an existings macro file")
 		file.add(createGeneralMacro)
 
-		#Create menu option to change the path to RScript.exe
+		# Create menu option to change the path to RScript.exe
 		changeRPath = JMenuItem("Change R Path", None, actionPerformed=self.changeRPath)
 		changeRPath.setToolTipText("Specify The Location of RScript.exe (Contained in the R Installation Directory by Default)")
 		file.add(changeRPath)
@@ -241,7 +242,7 @@ class ImageProcessorMenu:
 		basicRModifier.setToolTipText("Load a csv file and select two categories to be used in a scatter plot")
 		file.add(basicRModifier)
 
-		#Create menu option to add file extensions to the list of accepted types
+		# Create menu option to add file extensions to the list of accepted types
 		addAcceptedFileExtension = JMenuItem("Add Accepted File Extension...", None, actionPerformed=AddFileExtensionMenu)
 		addAcceptedFileExtension.setToolTipText("Add a Specified File Extension to the List of Accepted Types")
 		file.add(addAcceptedFileExtension)
@@ -265,7 +266,7 @@ class ImageProcessorMenu:
 		# Find the R executable
 		self.findR(False)
 		
-		#check if user has file containing accepted file extensions
+		# Check if user has file containing accepted file extensions
 		self.checkAcceptedExtensionsFile()
 
 	def checkPathFile(self):
@@ -279,30 +280,30 @@ class ImageProcessorMenu:
 			pathFile.write("rScriptPath\t\r\n")
 			pathFile.close()
 
-	#checks to see if the file Medical_Image/acceptedFileExtensions.txt exists within FIJI's plugins directory
+	# Checks to see if the file Medical_Image/acceptedFileExtensions.txt exists within FIJI's plugins directory
 	def checkAcceptedExtensionsFile(self):
-		#File does not exist
+		# File does not exist
 		if not os.path.exists(self.acceptedExtensionFile):
 			# Create the user path file, and write empty file paths
 			extFile = open(self.acceptedExtensionFile, "w")
-			#Get default accepted file extensions
+			# Get default accepted file extensions
 			defaultExtensions = self.defaultValidFileExtensionsString.split(',')
 			for ext in defaultExtensions:
 				extFile.write(ext.strip() + ", ")
 			self.validFileExtensionsString = self.defaultValidFileExtensionsString
 			extFile.close()
-		#File exists
+		# File exists
 		else:
 			file = open(self.acceptedExtensionFile, "r")
-			#temporary string for concatenation of file contents
+			# Temporary string for concatenation of file contents
 			tmp = ""
-			#Get extensions from file, concatenate to string
+			# Get extensions from file, concatenate to string
 			for line in file:
 				tmp = tmp + line
 			self.validFileExtensionsString = tmp
 			file.close()
 
-		#Update tool tip text to reflect all valid file extensions
+		# Update tool tip text to reflect all valid file extensions
 		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
 
 	# TODO: Move readPathFile, findR, setRPath somewhere else?
@@ -378,7 +379,7 @@ class ImageProcessorMenu:
 						notR = False
 		self.rcommand = rcmd
 
-	#Enables/Disables the file extension textfield based on the user's selected delimiter
+	# Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
 		extTextfield = JTextField()
 		# Iterate through JPanel to find the extension textfield
@@ -401,11 +402,11 @@ class ImageProcessorMenu:
 			extTextfield.setEnabled(True)
 			extTextfield.setBackground(Color.white)
 			extTextfield.setBorder(border)
-			#Text will not clear if the user has specified extensions and has changed delimiter category
+			# Text will not clear if the user has specified extensions and has changed delimiter category
 			if (extTextfield.getText() == "Example: .jpg, .png"):
 				extTextfield.setText("")
 
-	#Wrap method call so that it is callable outside this class' scope
+	# Wrap method call so that it is callable outside this class' scope
 	setExtensionTextfieldEnabled = CallableWrapper(setExtensionTextfieldEnabled)
 
 	# Launches file chooser dialog boxes to select a macro to generalize, and when file was used to create it
@@ -705,26 +706,26 @@ class ImageProcessorMenu:
 	def setOutputDirectory(self, event):
 		self.setDirectory("Output", None)
 
-	#Sets the macro file directory
+	# Sets the macro file directory
 	def setMacroFileDirectory(self,event):
 		self.setDirectory("Macro File", None)
 
-	#Sets the R script directory
+	# Sets the R script directory
 	def setRScriptDirectory(self, event):
 		self.setDirectory("R Script", None)
 
-	#Sets the R Path (RScript.exe) directory
+	# Sets the R Path (RScript.exe) directory
 	def setRPathDirectory(self, event):
 		self.setDirectory("R Path", None)
 
-	#Action listener for Change R Path menu option
+	# Action listener for Change R Path menu option
 	def changeRPath(self, event):
 		self.findR(True)
 
 	# Creates a filechooser for the user to select a directory for input or output
 	# @param directoryType	Determines whether or not to be used to locate the input, output, macro file, or R script directory
 	def setDirectory(self, directoryType, savedFilePath):
-		#User has no previously saved directory paths, open the file chooser
+		# User has no previously saved directory paths, open the file chooser
 		if savedFilePath is None:
 			# Creates a file chooser object
 			chooseFile = JFileChooser()
@@ -732,15 +733,15 @@ class ImageProcessorMenu:
 			if (directoryType == "Input" or directoryType == "Output"):
 				# Allow for selection of directories
 				chooseFile.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
-				#Jump to the user's previously selected directory location
+				# Jump to the user's previously selected directory location
 				if (directoryType == "Input" and not self.inputTextfield.getText() == "Select Input Directory"):
 					chooseFile.setCurrentDirectory(File(self.inputTextfield.getText()))
 				elif (directoryType == "Output" and not self.outputTextfield.getText() == "Select Output Directory"):
 					chooseFile.setCurrentDirectory(File(self.outputTextfield.getText()))
 			else:
-				#Allow for selection of files
+				# Allow for selection of files
 				chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
-				#Jump to the user's previously selected directory location
+				# Jump to the user's previously selected directory location
 				if (directoryType == "Macro File" and not self.macroSelectTextfield.getText() == "Select Macro File"):
 					chooseFile.setCurrentDirectory(File(self.macroSelectTextfield.getText()))
 				elif (directoryType == "R Script" and not self.rScriptSelectTextfield.getText() == "Select R Script"):
@@ -765,14 +766,14 @@ class ImageProcessorMenu:
 						self.rScriptDirectory = chooseFile.getSelectedFile() 
 						self.rScriptSelectTextfield.setText(chooseFile.getSelectedFile().getPath())
 					self.shouldEnableStart()
-		#User has data for previously saved directories, populate the text fields and global variables with pertinent information
+		# User has data for previously saved directories, populate the text fields and global variables with pertinent information
 		else:
-			#Get the file from specified path
+			# Get the file from specified path
 			file = File(savedFilePath)
 
-			#Only populate the path to the directory if the directory itself actually exists (user may have deleted it)
+			# Only populate the path to the directory if the directory itself actually exists (user may have deleted it)
 			if (os.path.exists(file.getPath())):
-				#Set directory based on type
+				# Set directory based on type
 				if (directoryType == "Input"):
 					self.inputDirectory = file
 					self.inputTextfield.setText(file.getPath())
@@ -859,49 +860,49 @@ class ImageProcessorMenu:
 
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
-		#Accepted file types
+		# Accepted file types
 		self.validFileExtensions = self.validFileExtensionsString.split(", ")
-		#Add blank string to list in case user does not specify file extensions
+		# Add blank string to list in case user does not specify file extensions
 		self.validFileExtensions.append("")
-		#Get the user's selected delimiter
+		# Get the user's selected delimiter
 		self.choice = self.delimeterComboBox.getSelectedItem()
 
-		#Get user's desired file extensions
-		#No need to get selected extensions if user wants all file types or has not specified any extensions
+		# Get user's desired file extensions
+		# No need to get selected extensions if user wants all file types or has not specified any extensions
 		if (self.choice == "All File Types" or (self.extensionTextfield.getText() == "")):
 			self.selectedExtensions = self.validFileExtensions
-		#User has chosen to include/exclude files of certain types
+		# User has chosen to include/exclude files of certain types
 		else:
 			self.selectedExtensions = self.extensionTextfield.getText()
 			self.selectedExtensions = self.selectedExtensions.lower()
 			self.selectedExtensions = self.selectedExtensions.split(", ")
 
-			#Validation routine to ensure selected file extensions are valid and comma seperated
+			# Validation routine to ensure selected file extensions are valid and comma seperated
 			if not (self.validateUserInput(self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
 				return
 
-		#Get file name contains pattern
+		# Get file name contains pattern
 		self.containString = self.containsTextfield.getText()
 
 		# Location of the generalized macro function, this will be a prompt where the user selects the file
 		self.macroFile = File(self.macroDirectory.getPath())
 
-		#Validation routine to ensure selected macro file is actually a macro file (file extension = '.ijm')
+		# Validation routine to ensure selected macro file is actually a macro file (file extension = '.ijm')
 		if not (self.validateUserInput(self.macroSelectTextfield.getName(), [self.macroFile.getName()[-4:]], [".ijm"])):
 			return
 
-		#Location of R Script
+		# Location of R Script
 		if not (self.rScriptSelectTextfield.getText() == "Select R Script"):
 			rScript = File(self.rScriptDirectory.getPath())
 
-			#Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
+			# Validation routine to ensure selected R Script is actually an R Script (file extension = '.R')
 			if not (self.validateUserInput(self.rScriptSelectTextfield.getName(), [rScript.getName()[-2:]], [".R"])):
 				return
 
 		# Gets an array of all the images in the input directory
 		listOfPictures = self.inputDirectory.listFiles()
 
-		#Returns images as specified by the user and adds them to a list
+		# Returns images as specified by the user and adds them to a list
 		listOfPicturesBasedOnUserSpecs = self.getImagesBasedOnUserFileSpecications(listOfPictures)
 
 		# Save the array of images to the instance
@@ -954,7 +955,7 @@ class ImageProcessorMenu:
 			if fileName.index(".") > 0:
 				fileName = fileName[0: fileName.index(".")]
 
-			#Will determine if user has specified an output directory or url location
+			# Will determine if user has specified an output directory or url location
 			logFileDir = ""
 
 			# Create a folder with the name of the image in the output folder to house any outputs of the macro
@@ -1002,7 +1003,7 @@ class ImageProcessorMenu:
 			thread = Thread(self.runner)
 			thread.start()
 
-			#Make a copy of the original image if the user has chosen to do so
+			# Make a copy of the original image if the user has chosen to do so
 			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				self.copyOriginalImageToNewDirectory(file, outputDir)
 
@@ -1022,7 +1023,7 @@ class ImageProcessorMenu:
 			except AttributeError:
 				print "No R Script Selected"
 
-	#Creates a generic dialog window to display error messages
+	# Creates a generic dialog window to display error messages
 	def showErrorDialog(self, title, message):
 		self.frameToDispose = GenericDialog("")
 		self.frameToDispose.setTitle(title)
@@ -1055,19 +1056,19 @@ class ImageProcessorMenu:
 			self.showErrorDialog(errorTitle, errorMessage)
 		return isValid
 
-	#Copies the original image from the existing directory to the newly created one
+	# Copies the original image from the existing directory to the newly created one
 	def copyOriginalImageToNewDirectory(self, fileToSave, outputDir):
 		try:
 			shutil.copy(self.inputDirectory.getPath() + "/" + fileToSave.getName(), outputDir.getPath() + "/" + fileToSave.getName())
 		except:
 			"some error"
 
-	#Gets values from file specification components within the JPanel and returns images based on user's specifications
+	# Gets values from file specification components within the JPanel and returns images based on user's specifications
 	def getImagesBasedOnUserFileSpecications(self, images):
 		imagesToReturn = []
 		for file in images:
 			fileName = file.getName()
-			#Check for file extensions
+			# Check for file extensions
 			if (fileName[-4:].lower() in self.selectedExtensions):
 				if ((self.choice == "Include" or self.choice == "All File Types") or (self.choice == "Exclude" and self.selectedExtensions == self.validFileExtensions)):
 					if not (self.containString == ""):
@@ -1078,25 +1079,25 @@ class ImageProcessorMenu:
 			if not (fileName[-4:].lower() in self.selectedExtensions):
 				if (self.choice == "Exclude" and fileName[-4:].lower() in self.validFileExtensions):
 					if not (self.containString == ""):
-						#Check for file name pattern
+						# Check for file name pattern
 						if (self.containString in fileName):
 							imagesToReturn.append(file)
-					#No file name pattern specified
+					# No file name pattern specified
 					else:
 						imagesToReturn.append(file)
 		return imagesToReturn
 
-	#Creates/appends to a log file in the user's specified output directory which will record all processing done on selected images
+	# Creates/appends to a log file in the user's specified output directory which will record all processing done on selected images
 	def createLogFile(self, img, logFileDir, outputDir, fileContents):
-		#Create a txt file for log info
+		# Create a txt file for log info
 		log = open(logFileDir, 'a')
 		log.write('Results for image: ' + img.getPath() + '\n')
 
-		#If the user has chosen to copy over the original image, record it in log file
+		# If the user has chosen to copy over the original image, record it in log file
 		if (self.copyImageToNewDirectoryCheckBox.isSelected()):
 				log.write('Copied image to: ' + outputDir.getPath() + '\n')
 
-		#Append each processing operation to the log file
+		# Append each processing operation to the log file
 		log.write('Process performed: ' + '\n')
 		operationsPerformed = fileContents.split(";")
 		for i in operationsPerformed:
@@ -1104,11 +1105,11 @@ class ImageProcessorMenu:
 		log.write('\n')
 		log.write('\n')
 
-		#Close the file
+		# Close the file
 		log.close()
 
-	#Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
-	#This file's data will be used to prepopulate the text fields with the user's last selected directories
+	# Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
+	# This file's data will be used to prepopulate the text fields with the user's last selected directories
 	def updateUserPathFile(self):
 		# Path to the Medical_Image directory
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
@@ -1136,7 +1137,7 @@ class ImageProcessorMenu:
 		writer.write(contents)
 		writer.close()
 
-	#Gets text file containing user's last used file paths
+	# Gets text file containing user's last used file paths
 	def getUserPathFile(self):
 		directoryNames = ["rPath","inputPath", "outputPath", "macroPath"]
 		# Path to the Medical_Image directory
@@ -1146,70 +1147,69 @@ class ImageProcessorMenu:
 		file = File(pluginDir + "\user_paths.txt")
 		sc = Scanner(file, "UTF-8")
 
-		#Append file contents to temporary string
+		# Append file contents to temporary string
 		filetxt = ""
 		while (sc.hasNext()):
 			filetxt = filetxt + sc.nextLine()
 
-		#Replace directory names within string with * in order to correctly extract paths
+		# Replace directory names within string with * in order to correctly extract paths
 		for name in directoryNames:
 			filetxt = re.sub(name, "*", filetxt)
 
-		#Split tmp string to array.  Each element represents a different path
+		# Split tmp string to array.  Each element represents a different path
 		paths = filetxt.split("*")
 
-		#Remove trailing and leading whitespace
+		# Remove trailing and leading whitespace
 		for i in range(0, len(paths)):
 			paths[i] = paths[i].strip()
 
 		return paths
 
-	#Assign each global path variable to corresponding path from array.  Also change text of each textfield.
+	# Assign each global path variable to corresponding path from array.  Also change text of each textfield.
 	def prepopulateDirectories(self):
-		#Get user paths file
+		# Get user paths file
 		paths = self.readPathFile()		
 
-		#Populate R Path
+		# Populate R Path
 		if paths['rPath'] != "":
 			self.setDirectory("R Path", paths['rPath'])
-		#Populate Input Directory Path
+		# Populate Input Directory Path
 		if paths['inputPath'] != "":
 			self.setDirectory("Input", paths['inputPath'])
-		#Populate Output Directory Path
+		# Populate Output Directory Path
 		if paths['outputPath'] != "":
 			self.setDirectory("Output", paths['outputPath'])
-		#Populate Macro File Path
+		# Populate Macro File Path
 		if paths['macroPath'] != "":
 			self.setDirectory("Macro File", paths['macroPath'])
-		#Populate R Script Path
+		# Populate R Script Path
 		if paths['rScriptPath'] != "":
 			self.setDirectory("R Script", paths['rScriptPath'])
 
 		self.shouldEnableStart()
 
-	#adds selected extension(s) to the text file containing the lsit of accepted file types. Also updates the global list variable for valid file types.
+	# Adds selected extension(s) to the text file containing the lsit of accepted file types. Also updates the global list variable for valid file types.
 	def updateUserAcceptedExtensions(self,extensions):
 		# Path to the Medical_Image directory
 		pluginDir = IJ.getDir("plugins") + "Medical_Image"
 
-		#Create a txt file for log info
+		# Create a txt file for log info
 		file = open(pluginDir + "/acceptedFileExtensions.txt", 'a')
 
 		for ext in extensions:
-			#boolean to indicate specified extension is already in the list - no need to add it again
+			# Boolean to indicate specified extension is already in the list - no need to add it again
 			duplicate = False
 			if ext.strip() in self.validFileExtensionsString:
 				duplicate = True
 			if not (duplicate):
-				#write extension to file
+				# write extension to file
 				file.write(ext.strip() + ", ")
-
-				#add new extensions to global list
+				# add new extensions to global list
 				self.validFileExtensionsString = self.validFileExtensionsString + ", " + ext.strip()
 
-		#Update tool tip text to reflect all valid file extensions
+		# Update tool tip text to reflect all valid file extensions
 		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
-		#Close the file
+		# Close the file
 		file.close()
 
 	updateUserAcceptedExtensions = CallableWrapper(updateUserAcceptedExtensions)
@@ -1303,17 +1303,17 @@ class ImageProcessorMenu:
 		out.close()
 
 
-#Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
+# Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
 class AddFileExtensionMenu():
-	#Gets the user's specified extension(s)
+	# Gets the user's specified extension(s)
 	def getUserInput(self, event):
-		#Split each extension to array
+		# Split each extension to array
 		extensions = self.addExtTextfield.getText().split(',')
 		ImageProcessorMenu.updateUserAcceptedExtensions(ImageProcessorMenu(), extensions)
 
-	#Window Constructor
+	# Window Constructor
 	def __init__(self, event):
-		#Create frame
+		# Create frame
 		frameWidth, frameHeight = 600, 300
 		self.addExtMenuFrame = JFrame("Add File Extension")
 		self.addExtMenuFrame.setSize(frameWidth, frameHeight)
@@ -1344,7 +1344,7 @@ class AddFileExtensionMenu():
 		self.addExtBtn.setPreferredSize(Dimension(150,40))
 		pnl.add(self.addExtBtn)
 
-		#Show the frame and disable resizing of it
+		# Show the frame and disable resizing of it
 		self.addExtMenuFrame.setResizable(False)
 		self.addExtMenuFrame.setVisible(True)
 
@@ -1448,5 +1448,5 @@ class macroRunner(Runnable):
 		self.inter.abort()
 
 if __name__ == '__main__':
-	#start things off.
+	# Start things off.
 	ImageProcessorMenu()
