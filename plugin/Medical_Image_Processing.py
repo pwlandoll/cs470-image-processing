@@ -106,7 +106,7 @@ class ImageProcessorMenu:
 		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
 
 		# Create the menu frame with size of 500x400
-		frameWidth, frameHeight = 550, 400
+		frameWidth, frameHeight = 550, 350
 		# Set button width
 		buttonWidth, buttonHeight = 130, 25
 		
