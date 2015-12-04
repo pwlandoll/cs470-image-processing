@@ -26,6 +26,8 @@ checkPackage <- function(x){
     }
   }
 }
+# Try/install packages...Insert any more packages that may be needed here
+checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin", "methods) )
 
 outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
 
@@ -70,8 +72,7 @@ sink(file=paste0("Area Summary_",curTime, ".txt", sep = ""))
 summary(areaCol)
 sink(NULL)
 
-# Try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
+
 
 #Will loop through data frame and plot the variables
 for ( i in seq(1,length( data ),1) ){
