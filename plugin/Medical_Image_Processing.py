@@ -97,16 +97,19 @@ class ImageProcessorMenu:
 	def __init__(self):
 		# String of accepted file types for use throughout application
 		self.defaultValidFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
-		#this will be set depending on the contents of the users acceptedFileExtensions.txt
+		# this will be set depending on the contents of the users acceptedFileExtensions.txt
 		self.validFileExtensionsString = ""
-		# path for the stored text file
-		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
-
 		#path for the stored accepted extension file
 		self.acceptedExtensionFile = IJ.getDir("plugins") + "Medical_Image/acceptedFileExtensions.txt"
 
-		# Create the menu frame with size of 450x400
-		frameWidth, frameHeight = 500, 400
+		# path for the stored text file
+		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
+
+		# Create the menu frame with size of 500x400
+		frameWidth, frameHeight = 550, 400
+		# Set button width
+		buttonWidth, buttonHeight = 130, 25
+		
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(frameWidth, frameHeight)
 		self.frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
@@ -123,7 +126,8 @@ class ImageProcessorMenu:
 		pnl.add(self.inputTextfield)
 
 		# Add a browse button to the frame for an input directory 
-		inputButton = JButton('Select',actionPerformed=self.optionMenuPopup)
+		inputButton = JButton('Select Input',actionPerformed=self.optionMenuPopup)
+		inputButton.setPreferredSize(Dimension(buttonWidth, buttonHeight))
 		pnl.add(inputButton)
 
 		# Add a textfield to the frame to display the output directory
@@ -132,7 +136,8 @@ class ImageProcessorMenu:
 		pnl.add(self.outputTextfield)
 
 		# Add a browse button to the frame to search for an output directory
-		outputButton = JButton('Select',actionPerformed=self.setOutputDirectory)
+		outputButton = JButton('Select Output',actionPerformed=self.setOutputDirectory)
+		outputButton.setPreferredSize(Dimension(buttonWidth, buttonHeight))
 		pnl.add(outputButton)
 
 		# Add a textfield to the frame to display the macro file directory
@@ -142,7 +147,8 @@ class ImageProcessorMenu:
 		pnl.add(self.macroSelectTextfield)
 
 		# Add a browse button to the frame to search for a macro file
-		macroFileSelectButton = JButton('Select',actionPerformed=self.setMacroFileDirectory)
+		macroFileSelectButton = JButton('Select Macro',actionPerformed=self.setMacroFileDirectory)
+		macroFileSelectButton.setPreferredSize(Dimension(buttonWidth, buttonHeight))
 		pnl.add(macroFileSelectButton)
 
 		# Add a textfield to the frame to display the R Script directory
@@ -152,7 +158,8 @@ class ImageProcessorMenu:
 		pnl.add(self.rScriptSelectTextfield)
 
 		# Add a browse button to the frame to search for an R Script
-		rScriptSelectButton = JButton('Select',actionPerformed=self.setRScriptDirectory)
+		rScriptSelectButton = JButton('Select R Script',actionPerformed=self.setRScriptDirectory)
+		rScriptSelectButton.setPreferredSize(Dimension(buttonWidth, buttonHeight))
 		pnl.add(rScriptSelectButton)
 
 		#Add separator line for user friendliness
@@ -367,7 +374,7 @@ class ImageProcessorMenu:
 						else:
 							JOptionPane.showMessageDialog(self.frame, "The selected file must be Rscript or Rscript.exe")
 					# If 'cancel' is selected then the loop breaks
-					if ret != JFileChooser.APPROVE_OPTION:
+					if ret == JFileChooser.CANCEL_OPTION:
 						notR = False
 		self.rcommand = rcmd
 
