@@ -61,21 +61,6 @@ from subprocess import call
 from urllib import urlretrieve
 
 
-# Wraps a method call to allow static methods to be called from ImageProcessorMenu
-class CallableWrapper:
-	def __init__(self, any):
-		self.__call__ = any
-
-
-# ActionListener for DelimiterComboBox
-class DelimiterActionListener(ActionListener):
-	def actionPerformed(self,event):
-		# Get DelimiterComboBox object
-		box = event.getSource()
-		# Enable/Disable extension textfield based on selected delimiter
-		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
-
-
 # This plugin creates a menu to batch process images using imagej's macro files.
 # This pluign requires the user to have R installed on their machine.
 # This plugin requires the user to have created a macro file with imagej's macro recorder
@@ -89,11 +74,7 @@ class DelimiterActionListener(ActionListener):
 #	in the directory or in the text file. When finished the results will be fed into an R
 #	script for analyzing (need to implement)
 class ImageProcessorMenu:
-	# Closes the program
-	def onExit(self, event):
-		System.exit(0)
 
-	# Constructor
 	def __init__(self):
 		# String of accepted file types for use throughout application
 		self.defaultValidFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
@@ -269,6 +250,10 @@ class ImageProcessorMenu:
 		# Check if user has file containing accepted file extensions
 		self.checkAcceptedExtensionsFile()
 
+	# Closes the program
+	def onExit(self, event):
+		System.exit(0)
+
 	def checkPathFile(self):
 		if not os.path.exists(self.pathFile):
 			# Create the user path file, and write empty file paths
@@ -306,9 +291,7 @@ class ImageProcessorMenu:
 		# Update tool tip text to reflect all valid file extensions
 		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
 
-	# TODO: Move readPathFile, findR, setRPath somewhere else?
-	# read in the data from the path file, return as a dictionary
-	# to be used by findR, pullFileInfo
+	# Read in the data from the path file, return as a dictionary
 	def readPathFile(self):
 		returnDictionary = {
 			"inputPath": "",
@@ -316,24 +299,24 @@ class ImageProcessorMenu:
 			"macroPath": "",
 			"rPath": "",
 			"rScriptPath": ""}
-		# open the file as read-only
+		# Open the file as read-only
 		pathFile = open(self.pathFile, 'r')
 		# Take each line, split along delimeter, and store in dictionary
 		for line in pathFile:
-			# split on tab character
+			# Split on tab character
 			split = line.split("\t")
-			# update the dictionary only if splitting shows there was a value stored
+			# Update the dictionary only if splitting shows there was a value stored
 			if len(split) > 1:
 				returnDictionary[split[0]] = split[1].strip()
 		pathFile.close()
 		return returnDictionary
 
 	def findR(self, change):
-		# get rPath from the path file
-		# requires that the path file exists
+		# Get rPath from the path file
+		# Requires that the path file exists
 		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
-		# if it found one, set the global variable and prepopulate directories, else further the search
+		# If it found one, set the global variable and prepopulate directories, else further the search
 		if rPath and not change:
 			rcmd = rPath
 			self.prepopulateDirectories()
@@ -346,7 +329,7 @@ class ImageProcessorMenu:
 			elif os.path.exists(linuxdir) and not change:
 				rcmd = linuxdir
 			elif os.path.exists(windowsdir) and not change:
-				# set the R command to the latest version in the C:\Program Files\R folder
+				# Set the R command to the latest version in the C:\Program Files\R folder
 				try:
 					rcmd = '"' + windowsdir + "/" + os.listdir(windowsdir)[-1] + '/bin/Rscript.exe"'
 				except IndexError:
@@ -378,7 +361,7 @@ class ImageProcessorMenu:
 					if ret == JFileChooser.CANCEL_OPTION:
 						notR = False
 		self.rcommand = rcmd
-
+		
 	# Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
 		extTextfield = JTextField()
@@ -1301,6 +1284,23 @@ class ImageProcessorMenu:
 		out = open(IJ.getDir("plugins") + "Medical_Image/testing.R", "w")
 		out.write(newR)
 		out.close()
+
+	### End of ImageProcessorMenu
+
+
+# Wraps a method call to allow static methods to be called from ImageProcessorMenu
+class CallableWrapper:
+	def __init__(self, any):
+		self.__call__ = any
+
+
+# ActionListener for DelimiterComboBox
+class DelimiterActionListener(ActionListener):
+	def actionPerformed(self,event):
+		# Get DelimiterComboBox object
+		box = event.getSource()
+		# Enable/Disable extension textfield based on selected delimiter
+		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
 
 
 # Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
