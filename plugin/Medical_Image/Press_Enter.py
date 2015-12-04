@@ -15,7 +15,7 @@ class PressEnterRunner(Runnable):
 		try:
 			self.task = PressEnterTask()
 			self.task.setRef(self)
-			self.timer.schedule(self.task, 2000)
+			self.timer.schedule(self.task, 10000)
 		except AttributeError:
 			pass	
 
@@ -36,6 +36,10 @@ class PressEnterTask(TimerTask):
 	def run(self):
 		robot = Robot()
 		robot.keyPress(KeyEvent.VK_ENTER)
+		try:
+			self.ref.start()
+		except:
+			print "Error"
 
 	def setRef(self, ref):
 		self.ref = ref

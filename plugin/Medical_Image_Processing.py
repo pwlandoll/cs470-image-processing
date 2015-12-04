@@ -840,7 +840,13 @@ class ImageProcessorMenu:
 		# Checks if the path to RScript includes a quote as the first character
 		# If it does, then the scriptFilename must be encapsulated in quotes
 		# This is necessary for filepaths with spaces in them in windows
-		if self.rcommand[0:1] == '"':
+
+		# Makes sure rcommand is surrounded by quotes on windows
+		if ".exe" in self.rcommand and self.rcommand[0:1] != '"':
+			self.rcommand = '"' + self.rcommand + '"'
+
+		# Makes sure arguments for the command line command are in quotes on windows
+		if ".exe" in self.rcommand:
 			scriptFilename = '"' + scriptFilename.getPath() + '"'
 			outputDirectory = '"' + outputDirectory.getPath() + '"'
 
