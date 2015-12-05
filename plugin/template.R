@@ -27,7 +27,7 @@ checkPackage <- function(x){
   }
 }
 # Try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2", "methods") )
+checkPackage( c("methods") )
 
 outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
 
@@ -89,7 +89,7 @@ for ( i in seq(1,length( data ),1) ){
   jpeg(paste("Numerical Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""), width = 1000, height = 600)
   #Type B will output both points and lines. Require user to include base Image in their plot.
   plot(data[,i],ylab=names(data[i]), type = "b", col = factor(data$Base.Image))
-  par(xpd=TRUE)
+ # par(xpd=TRUE)
 #   legend('topright', legend = (factor(data$Base.Image)), 
 #          lty=1, col=factor(data$Base.Image), bty='n', cex=.75)
   dev.off()
