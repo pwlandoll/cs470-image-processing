@@ -29,10 +29,12 @@ checkPackage <- function(x){
 #  Then try/install packages...Insert any more packages that may be needed here
 checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
 
+outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
 
 # This is the code to read all csv files into R.
 # Create One data frame.
-path <- paste0(getwd(), "/")
+path <- paste0(outputDirectory, "/", sep="")
+print(path)
 file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
