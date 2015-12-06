@@ -17,6 +17,10 @@ from java.awt import Container
 from java.awt import Dimension
 from java.awt.event import ActionListener
 from java.awt.event import WindowAdapter
+from java.awt import Robot
+from java.awt.event import KeyEvent
+
+
 
 from java.io import BufferedReader
 from java.io import BufferedWriter
@@ -52,6 +56,8 @@ from javax.swing.border import Border
 from javax.swing.filechooser import FileNameExtensionFilter
 
 from java.util import Scanner
+from java.util import Timer
+from java.util import TimerTask
 
 from loci.plugins import BF
 
@@ -501,10 +507,9 @@ class ImageProcessorMenu:
 						command = re.sub(r'run\("([^"]*)"[^\)]*\)', r'\1',line).replace(".","").replace(" ","_")
 					else:
 						command = "unknown"
-					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");" + 'run("Press Enter", "reset");'
+					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");"
 			else:
-				fileContents = fileContents.replace(";",';saveResults();run("Press Enter", "reset");')
-			fileContents = 'run("Press Enter", "start");' + fileContents + 'run("Press Enter", "stop");'
+				fileContents = fileContents.replace(";",';saveResults();')
 
 
 			# Inserts in import function if the user did not use one
@@ -938,6 +943,9 @@ class ImageProcessorMenu:
 			self.macroMenu = MacroProgressMenu()
 			self.macroMenu.setMenuReference(self)
 
+			self.enterPresser = PressEnterRunner()
+			Thread(self.enterPresser).start()
+
 		# Checks that there is another image to process
 		if self.index < len(self.pictures):
 			# Increase the progress bar's value
@@ -1015,7 +1023,7 @@ class ImageProcessorMenu:
 			#	of the progress menu.
 			self.frame.setVisible(True)
 			self.macroMenu.disposeMenu()
-
+			self.enterPresser.stop()
 			# Run the R script if one has been selected
 			try:
 				self.runRScript(self.rScriptDirectory, self.outputDirectory)
@@ -1396,9 +1404,6 @@ class MacroProgressMenu(WindowAdapter):
 		# Shows the main menu
 		self.ref.frame.setVisible(True)
 
-		# Stops the automatic enter pressing
-		MacroRunner('run("Press Enter", "stop");')
-
 		# Disposes of this progress menu
 		self.disposeMenu()
 
@@ -1427,7 +1432,7 @@ class macroRunner(Runnable):
 		try:
 			self.inter.run(self.macroString)
 		except:
-			MacroRunner('run("Press Enter", "stop");')
+			self.enterPresser.stop()
 		# Prevents future macros from running if current macro was aborted
 		if self.run:
 			#ADD FOR FINAL
@@ -1447,6 +1452,45 @@ class macroRunner(Runnable):
 	# Aborts the currently running macro
 	def abortMacro(self):
 		self.inter.abort()
+		
+class PressEnterRunner(Runnable):
+	def run(self):
+		self.timer = Timer()
+		self.start()
+		
+	def start(self):
+		try:
+			self.task = PressEnterTask()
+			self.task.setRef(self)
+			self.timer.schedule(self.task, 10000)
+		except AttributeError:
+			pass	
+
+	def stop(self):
+		try:
+			self.timer.cancel()
+		except AttributeError:
+			pass
+		
+	def reset(self):
+		try:
+			self.stop()
+			self.start()
+		except AttributeError:
+			pass
+
+class PressEnterTask(TimerTask):
+	def run(self):
+		robot = Robot()
+		robot.keyPress(KeyEvent.VK_ENTER)
+		try:
+			self.ref.start()
+		except:
+			print "Error"
+
+	def setRef(self, ref):
+		self.ref = ref
+
 
 if __name__ == '__main__':
 	# Start things off.
