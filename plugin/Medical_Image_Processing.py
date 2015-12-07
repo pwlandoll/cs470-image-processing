@@ -3,6 +3,8 @@ import re
 
 from csv import reader
 
+from datetime import datetime
+
 from ij import IJ
 from ij import Menus
 from ij import WindowManager
@@ -15,12 +17,10 @@ from java.awt import BorderLayout
 from java.awt import Color
 from java.awt import Container
 from java.awt import Dimension
-from java.awt.event import ActionListener
-from java.awt.event import WindowAdapter
 from java.awt import Robot
+from java.awt.event import ActionListener
 from java.awt.event import KeyEvent
-
-
+from java.awt.event import WindowAdapter
 
 from java.io import BufferedReader
 from java.io import BufferedWriter
@@ -28,7 +28,6 @@ from java.io import File
 from java.io import FileReader
 from java.io import FileWriter
 from java.io import IOException
-import datetime
 
 from java.lang import System
 from java.lang import Thread
@@ -96,7 +95,6 @@ class DelimiterActionListener(ActionListener):
 
 # Main class
 class ImageProcessorMenu:
-
 	def __init__(self):
 		# String of accepted file types for use throughout application
 		self.defaultValidFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
@@ -1098,17 +1096,17 @@ class ImageProcessorMenu:
 	def createLogFile(self, img, logFileDir, outputDir, fileContents):
 		# Create a txt file for log info
 		log = open(logFileDir, 'a')
-		log.write(str(datetime.datetime.now()) +' - Results for image: ' + img.getPath() + '\n')
+		log.write(str(datetime.now()) +' - Results for image: ' + img.getPath() + '\n')
 
 		# If the user has chosen to copy over the original image, record it in log file
 		if (self.copyImageToNewDirectoryCheckBox.isSelected()):
-				log.write(str(datetime.datetime.now()) +'Copied image to: ' + outputDir.getPath() + '\n')
+				log.write(str(datetime.now()) +'Copied image to: ' + outputDir.getPath() + '\n')
 
 		# Append each processing operation to the log file
 		log.write('Process performed: ' + '\n')
 		operationsPerformed = fileContents.split(";")
 		for i in operationsPerformed:
-			log.write('\t' + str(datetime.datetime.now()) + ' - ' + i + '\n')
+			log.write('\t' + str(datetime.now()) + ' - ' + i + '\n')
 		log.write('\n')
 		log.write('\n')
 
