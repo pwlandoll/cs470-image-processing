@@ -244,7 +244,7 @@ class ImageProcessorMenu:
 		file.add(basicRModifier)
 
 		# Create menu option to add file extensions to the list of accepted types
-		addAcceptedFileExtension = JMenuItem("Add Accepted File Extension...", None, actionPerformed=AddFileExtensionMenu)
+		addAcceptedFileExtension = JMenuItem("Add Accepted File Extension", None, actionPerformed=AddFileExtensionMenu)
 		addAcceptedFileExtension.setToolTipText("Add a Specified File Extension to the List of Accepted Types")
 		file.add(addAcceptedFileExtension)
 
