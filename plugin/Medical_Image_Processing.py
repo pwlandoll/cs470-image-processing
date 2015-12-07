@@ -195,7 +195,7 @@ class ImageProcessorMenu:
 		pnl.add(self.extensionTextfield)
 
 		# Blank spaces for alignment purposes
-		self.blankLbl = JLabel("     ")
+		self.blankLbl = JLabel("            ")
 		pnl.add(self.blankLbl)
 
 		# Label for textfield below
