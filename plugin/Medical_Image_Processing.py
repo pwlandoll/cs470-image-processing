@@ -96,15 +96,17 @@ class DelimiterActionListener(ActionListener):
 # Main class
 class ImageProcessorMenu:
 	def __init__(self):
+		# Creates a variable for the directory instead of hard coding it
+		self.directoryName = "Medical_Image"
 		# String of accepted file types for use throughout application
 		self.defaultValidFileExtensionsString = ".png, .gif, .dcm, .jpg, .jpeg, .jpe, .jp2, .ome.fif, .ome.tiff, .ome.tf2, .ome.tf8, .ome.bft, .ome, .mov, .tif, .tiff, .tf2, .tf8, .btf, .v3draw, .wlz"
 		# This will be set depending on the contents of the users acceptedFileExtensions.txt
 		self.validFileExtensionsString = ""
 		# Path for the stored accepted extension file
-		self.acceptedExtensionFile = IJ.getDir("plugins") + "Medical_Image/acceptedFileExtensions.txt"
+		self.acceptedExtensionFile = IJ.getDir("plugins") + self.directoryName + "/acceptedFileExtensions.txt"
 
 		# Path for the stored text file
-		self.pathFile = IJ.getDir("plugins") + "Medical_Image/user_paths.txt"
+		self.pathFile = IJ.getDir("plugins") + self.directoryName + "/user_paths.txt"
 
 		# Set frame size
 		frameWidth, frameHeight = 550, 350
@@ -285,7 +287,7 @@ class ImageProcessorMenu:
 			pathFile.write("rScriptPath\t\r\n")
 			pathFile.close()
 
-	# Checks to see if the file Medical_Image/acceptedFileExtensions.txt exists within FIJI's plugins directory
+	# Checks to see if the file self.directoryName + /acceptedFileExtensions.txt exists within FIJI's plugins directory
 	def checkAcceptedExtensionsFile(self):
 		# File does not exist
 		if not os.path.exists(self.acceptedExtensionFile):
@@ -428,15 +430,27 @@ class ImageProcessorMenu:
 		ret = chooseFile.showDialog(self.inputTextfield, "Choose file")
 
 		# If a file is chosen continue to allow user to choose where to save the generalized file
-		# TODO: combine statements
-		if chooseFile.getSelectedFile() is not None:
-			if ret == JFileChooser.APPROVE_OPTION:
-				frame = JFrame();
+		if chooseFile.getSelectedFile() is not None and ret == JFileChooser.APPROVE_OPTION:
+			name = self.getName()
+			print name
+			if name != None:
+				self.generalize(chooseFile.getSelectedFile(), name)
 
-				# Creates a prompt asking the user of the name of the file used in creating the original macro
-				result = JOptionPane.showInputDialog(frame, "Enter image name used to create macro (including extension):");
-				if result != None:
-					self.generalize(chooseFile.getSelectedFile(), result)
+	# Prompts the user for the name of a file, if the user leaves the field black, informs the user a name is required
+	# If user clicks cancel on error, None is returned
+	# If user enters a name, that name is returned
+	def getName(self):
+		# Creates a prompt asking the user of the name of the file used in creating the original macro
+		result = JOptionPane.showInputDialog(None, "Enter image name used to create macro (including extension):");
+		if result == None or result =="":
+			self.showErrorDialog("Error","Must enter a name. If no name exists, enter NONAME")
+			# If user clicks cancel on error message, don't continue
+			if not self.frameToDispose.wasCanceled():
+				return self.getName()
+			else:
+				return None
+		else:
+			return result
 
 	# Takes a specific macro file and generalizes it to be used in the processing pipeline
 	# macroFile, type=File, The specific macro file
@@ -494,6 +508,9 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH/\2IMAGENAME")', fileContents)
 			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH/\2NOEXTENSION\3")', fileContents)
 
+			# Replace .xls extensions with .csv so results will work with the R script
+			fileContents = fileContents.replace(".xls", ".csv")
+
 			# Inserts code to save the images if no save commands are found in the original macro file
 			if fileContents.find("Bio-Formats Exporter") == -1 and fileContents.find("saveAs(") == -1 and fileContents.find('run("Save"') == -1:
 				# Split the macro by ; and add the text ;saveChanges(); inbetween each split to save any images changes that might have occured
@@ -506,8 +523,6 @@ class ImageProcessorMenu:
 					else:
 						command = "unknown"
 					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");"
-			else:
-				fileContents = fileContents.replace(";",';saveResults();')
 
 
 			# Inserts in import function if the user did not use one
@@ -1116,8 +1131,8 @@ class ImageProcessorMenu:
 	# Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
 	# This file's data will be used to prepopulate the text fields with the user's last selected directories
 	def updateUserPathFile(self):
-		# Path to the Medical_Image directory
-		pluginDir = IJ.getDir("plugins") + "Medical_Image"
+		# Path to the self.directoryName directory
+		pluginDir = IJ.getDir("plugins") + self.directoryName
 
 		# Create the file to house the path
 		file = File(pluginDir + "/user_paths.txt")
@@ -1145,8 +1160,8 @@ class ImageProcessorMenu:
 	# Gets text file containing user's last used file paths
 	def getUserPathFile(self):
 		directoryNames = ["rPath","inputPath", "outputPath", "macroPath"]
-		# Path to the Medical_Image directory
-		pluginDir = IJ.getDir("plugins") + "Medical_Image"
+		# Path to the self.directoryName directory
+		pluginDir = IJ.getDir("plugins") + self.directoryName
 
 		# Get file containing user's saved file paths
 		file = File(pluginDir + "\user_paths.txt")
@@ -1195,8 +1210,8 @@ class ImageProcessorMenu:
 
 	# Adds selected extension(s) to the text file containing the lsit of accepted file types. Also updates the global list variable for valid file types.
 	def updateUserAcceptedExtensions(self,extensions):
-		# Path to the Medical_Image directory
-		pluginDir = IJ.getDir("plugins") + "Medical_Image"
+		# Path to the self.directoryName  directory
+		pluginDir = IJ.getDir("plugins") + self.directoryName
 
 		# Create a txt file for log info
 		file = open(pluginDir + "/acceptedFileExtensions.txt", 'a')
@@ -1250,15 +1265,20 @@ class ImageProcessorMenu:
 	# Drop down menus are populated with the column names from the csv file
 	# Creates a basic R script using the selected variables
 	def basicRModifier(self,event):
+		# Creates file chooser to select a .csv file
 		chooseFile = JFileChooser()
 		chooseFile.setFileSelectionMode(JFileChooser.FILES_ONLY)
 		ret = chooseFile.showDialog(self.frame, "Select csv file")
 		if chooseFile.getSelectedFile() is not None and ret == JFileChooser.APPROVE_OPTION:
+			# Checks if file selected is a .csv file
 			if chooseFile.getSelectedFile().getPath()[-4:] == ".csv":
+				# Open the file
 				csvFile = open(chooseFile.getSelectedFile().getPath(), "rt")
 				try:
 					csvreader = reader(csvFile)
+					# Read in the columns as an array
 					columns = csvreader.next()
+					# Create a basic menu with two drop downs
 					frame = JFrame("Create Basic R Script")
 					frame.setSize(400,150)
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE)
@@ -1269,6 +1289,8 @@ class ImageProcessorMenu:
 					yLabel = JLabel("Y Variable:")
 					self.xComboBox = JComboBox()
 					self.yComboBox = JComboBox()
+
+					#Fill in drop downs with the column names
 					for column in columns:
 						self.xComboBox.addItem(column)
 						self.yComboBox.addItem(column)
@@ -1290,6 +1312,9 @@ class ImageProcessorMenu:
 				if not self.frameToDispose.wasCanceled():
 					self.basicRModifier(None)
 
+	# Checks is both an x and y have been selected
+	# If not, show error message
+	# If so, create a basic r script
 	def errorCheckSelected(self,event):
 		if self.xComboBox.getSelectedItem() == " " or self.yComboBox.getSelectedItem() == " ":
 			self.showErrorDialog("Error","Both an x and y variable must be selected")
@@ -1298,12 +1323,12 @@ class ImageProcessorMenu:
 
 	# TODO: implement
 	def generateBasicRScript(self, xVariable, yVariable):
-		defaultR = open(IJ.getDir("plugins") + "Medical_Image/default.R", "r")
+		defaultR = open(IJ.getDir("plugins") + self.directoryName + "/default.R", "r")
 		newR = ""
 		for line in defaultR:
 			if line[0:1] != "#":
 				newR = newR + line
-		out = open(IJ.getDir("plugins") + "Medical_Image/testing.R", "w")
+		out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
 		out.write(newR)
 		out.close()
 
