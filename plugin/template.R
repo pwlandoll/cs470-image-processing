@@ -5,6 +5,10 @@
 #Clear global enviornment
 rm(list = ls(all.names = TRUE))
 
+#Libraries should now install to /Users/"you"/R/win-library/x.y, 
+#for which you have the appropriate permissions.
+dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)
+
 # Retrieve Date and Time
 # Date will be used to create a new directory
 # Time will be used to save files into that new directory. (Timestamp)
@@ -27,7 +31,7 @@ checkPackage <- function(x){
   }
 }
 # Try/install packages...Insert any more packages that may be needed here
-checkPackage( c("methods") )
+checkPackage( c("methods", "ggplot2") )
 
 outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
 
@@ -40,13 +44,19 @@ data <- do.call("rbind", lapply(file_list, function(x)
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
 
 # Create a subdirectory based on the curDate variable for saving plots.
-# (If today is 4/4/14, then a new folder will be created with that date and any work done on that day will be 
-# saved into that folder.)Will then set current directory to the new direcory created. 
-# This way all the data has already been loaded into the global enviornment per the previous directory. 
-# Now all new plots will be saved to the new directory.
+# A Folder is created with the current date as it's name
 dir.create(file.path(path,curDate), showWarnings = FALSE)
+# Set newly created folder as working directory. Now all files saved will be
+# saved into that location
 setwd(paste(path,curDate,"/",sep = ""))
-getwd()
+
+#Create a new data frame based on if the word area is found in any of the columns
+#If this is the case, a new data frame will be created based on those area columns
+#This can similarily be done with other variables. Simply substitue area with a new word/subset of letters.
+areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
+sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
+summary(areaCol)
+sink(NULL)
 
 #Check if initial data frame is null. If that is the case the lines below will not run.
 # This function should return a proper list with all the data.frames as elements.
@@ -65,33 +75,38 @@ sink(file=paste0("Complete Data Summary_",curTime, ".txt", sep = ""))
 summary(data)
 sink(NULL)
 
-#Create a new data frame based on if the word area is found in any of the columns
-#If this is the case, a new data frame will be created based on those area columns
-areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
-sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
-summary(areaCol)
-sink(NULL)
+# Return each unique variable from Base.Image Column. (No Repeats)
+count <- unique(data$Base.Image)
+# Return the count of the number of rows in the previous variable count
+count <- length(count)
+# Create a color palette with the amount return from count.
+# R palette is only set to 8 different colors to begin with
+col.rainbow <- rainbow(count)
+# Set current palette to col.rainbow created above
+palette(col.rainbow)
 
-
-
-#Will loop through data frame and plot the variables
-for ( i in seq(1,length( data ),1) ){
-  if(typeof(data[[i]]) == "integer" | typeof(data[[i]]) == "double"){
-  jpeg(paste(names(data[i]),"  ", curTime, ".jpg", sep=""))
-  plot(data[,i],ylab=names(data[i]),type="l")
-  dev.off()
-  }
-}
-#Plot that includes coloring of points based on image variable
+#Plot All indexes for One Variable at a time.
 for ( i in seq(1,length( data ),1) ){
   #Plotting numerical data. Will only look for variables that are either integer or double
   if(typeof(data[[i]]) == "integer" | typeof(data[[i]]) == "double"){
-  jpeg(paste("Numerical Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""), width = 1000, height = 600)
-  #Type B will output both points and lines. Require user to include base Image in their plot.
+  jpeg(paste("Numerical Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""), width = 1500, height = 900)
+  # Type B will output both points and lines.Base.Image must be included from FIJI Macro.
+  # Plots index of image vs. Variable Column. *Columns are not compared against one another
   plot(data[,i],ylab=names(data[i]), type = "b", col = factor(data$Base.Image))
- # par(xpd=TRUE)
-#   legend('topright', legend = (factor(data$Base.Image)), 
-#          lty=1, col=factor(data$Base.Image), bty='n', cex=.75)
+  #Need legend. Scalibility issue.
   dev.off()
   }
+}
+
+#Plotting two variables passed in: Scatterplot
+variableX<- Pass variable here.
+variableY<- Pass variable here.
+library(ggplot2)
+#If both variables are of numberic type...
+if(isTRUE(typeof(varaibleX == "integer" | typeof(variableX) == "double") &
+  isTRUE(typeof(variableY) == "integer" | typeof(variableY) == "double")))
+{
+#Create a scatterplot with a regression line
+plot <- qplot(variablex, variabley)+ geom_smooth(method=lm,se=FALSE)
+ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
