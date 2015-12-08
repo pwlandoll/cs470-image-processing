@@ -1,6 +1,9 @@
 #Clear global enviornment
 rm(list = ls(all.names = TRUE))
 
+#Libraries should now install to /Users/"you"/R/win-library/x.y, 
+#for which you have the appropriate permissions.
+dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)
 
 # Retrieve Date and Time
 # Date will be used to create a new directory
