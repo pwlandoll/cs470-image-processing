@@ -89,11 +89,19 @@ palette(col.rainbow)
 for ( i in seq(1,length( data ),1) ){
   #Plotting numerical data. Will only look for variables that are either integer or double
   if(typeof(data[[i]]) == "integer" | typeof(data[[i]]) == "double"){
-  jpeg(paste("Numerical Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""), width = 1500, height = 900)
+  #ScatterPlot
+  jpeg(paste("Scatter Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""), width = 1500, height = 900)
   # Type B will output both points and lines.Base.Image must be included from FIJI Macro.
   # Plots index of image vs. Variable Column. *Columns are not compared against one another
   plot(data[,i],ylab=names(data[i]), type = "b", col = factor(data$Base.Image))
-  #Need legend. Scalibility issue.
+  dev.off()
+  #BoxPlot
+  jpeg(paste("Box Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""))
+  boxplot(data[,i],ylab=names(data[i]))
+  dev.off()
+  #BarPlot
+  jpeg(paste("Bar Plot ",names(data[i]),"  ", curTime, ".jpg", sep=""))
+  barplot(data[,i],ylab=names(data[i]), col = factor(data$Base.Image))
   dev.off()
   }
 }
