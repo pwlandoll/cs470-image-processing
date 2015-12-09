@@ -106,6 +106,8 @@ class ImageProcessorMenu:
 		self.acceptedExtensionFile = IJ.getDir("plugins") + self.directoryName + "/acceptedFileExtensions.txt"
 
 		# Path for the stored text file
+		# TODO: Have this set to a directory with write access 
+		#self.pathFile = "~/.MIP_user_paths.txt"
 		self.pathFile = IJ.getDir("plugins") + self.directoryName + "/user_paths.txt"
 
 		# Set frame size
@@ -279,13 +281,16 @@ class ImageProcessorMenu:
 	def checkPathFile(self):
 		if not os.path.exists(self.pathFile):
 			# Create the user path file, and write empty file paths
-			pathFile = open(self.pathFile, "w")
-			pathFile.write("inputPath\t\r\n")
-			pathFile.write("outputPath\t\r\n")
-			pathFile.write("macroPath\t\r\n")
-			pathFile.write("rPath\t\r\n")
-			pathFile.write("rScriptPath\t\r\n")
-			pathFile.close()
+			try:
+				pathFile = open(self.pathFile, "w")
+				pathFile.write("inputPath\t\r\n")
+				pathFile.write("outputPath\t\r\n")
+				pathFile.write("macroPath\t\r\n")
+				pathFile.write("rPath\t\r\n")
+				pathFile.write("rScriptPath\t\r\n")
+				pathFile.close()
+			except IOError:
+				self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % self.pathFile)
 
 	# Checks to see if the file self.directoryName + /acceptedFileExtensions.txt exists within FIJI's plugins directory
 	def checkAcceptedExtensionsFile(self):
@@ -301,14 +306,17 @@ class ImageProcessorMenu:
 			extFile.close()
 		# File exists
 		else:
-			file = open(self.acceptedExtensionFile, "r")
-			# Temporary string for concatenation of file contents
-			tmp = ""
-			# Get extensions from file, concatenate to string
-			for line in file:
-				tmp = tmp + line
-			self.validFileExtensionsString = tmp
-			file.close()
+			try:
+				file = open(self.acceptedExtensionFile, "r")
+				# Temporary string for concatenation of file contents
+				tmp = ""
+				# Get extensions from file, concatenate to string
+				for line in file:
+					tmp = tmp + line
+				self.validFileExtensionsString = tmp
+				file.close()
+			except IOError:
+				self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % self.acceptedExtensionFile)
 
 		# Update tool tip text to reflect all valid file extensions
 		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
@@ -321,16 +329,19 @@ class ImageProcessorMenu:
 			"macroPath": "",
 			"rPath": "",
 			"rScriptPath": ""}
-		# Open the file as read-only
-		pathFile = open(self.pathFile, 'r')
-		# Take each line, split along delimeter, and store in dictionary
-		for line in pathFile:
-			# Split on tab character
-			split = line.split("\t")
-			# Update the dictionary only if splitting shows there was a value stored
-			if len(split) > 1:
-				returnDictionary[split[0]] = split[1].strip()
-		pathFile.close()
+		try:
+			# Open the file as read-only
+			pathFile = open(self.pathFile, 'r')
+			# Take each line, split along delimeter, and store in dictionary
+			for line in pathFile:
+				# Split on tab character
+				split = line.split("\t")
+				# Update the dictionary only if splitting shows there was a value stored
+				if len(split) > 1:
+					returnDictionary[split[0]] = split[1].strip()
+			pathFile.close()
+		except IOError:
+			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % self.pathFile)
 		return returnDictionary
 
 	def findR(self, change):
@@ -339,7 +350,7 @@ class ImageProcessorMenu:
 		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
 		# If it found one, set the global variable and prepopulate directories, else further the search
-		if rPath and not change:
+		if rPath and rPath != "" and not change:
 			rcmd = rPath
 			self.prepopulateDirectories()
 		else:
@@ -837,15 +848,19 @@ class ImageProcessorMenu:
 		self.inputDirectory = self.outputDirectory.getPath() + "/originalImages/"
 		self.inputDirectory = File(self.inputDirectory)
 		self.inputDirectory.mkdirs()
-		# Save each image in the file
-		for line in open(filename):
-			try:
-				path = self.inputDirectory.getPath().replace("\\","/") + '/' + line[line.rfind('/') + 1:].replace("/","//")
-				urlretrieve(line.strip(), path.strip())
-			except:
-				# JAVA 7 and below will not authenticate with SSL Certificates of length 1024 and above
-				# no workaround I can see as fiji uses its own version of java
-				print "unable to access server"
+		try:
+			inputFile = open(filename, 'w')
+			# Save each image in the file
+			for line in inputFile:
+				try:
+					path = self.inputDirectory.getPath().replace("\\","/") + '/' + line[line.rfind('/') + 1:].replace("/","//")
+					urlretrieve(line.strip(), path.strip())
+				except:
+					# JAVA 7 and below will not authenticate with SSL Certificates of length 1024 and above
+					# no workaround I can see as fiji uses its own version of java
+					print "unable to access server"
+		except IOError:
+			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % filename)
 
 	# Runs the R script selected by the user
 	# If no R script was selected, do nothing
@@ -949,6 +964,8 @@ class ImageProcessorMenu:
 	def process(self):
 		# True when processing the first image
 		if self.index == 0:
+			# Save data to the user path file
+			self.updateUserPathFile()
 			# Hide the main menu
 			self.frame.setVisible(False)
 
@@ -1029,8 +1046,6 @@ class ImageProcessorMenu:
 
 			#Creates a log file (or appends to it if one already exists) which will record processing procedures and other pertinent information
 			self.createLogFile(file, logFileDir, outputDir, fileContents)
-
-			self.updateUserPathFile()
 		else:
 			# Macros are finished running, so show the main menu and dispose
 			#	of the progress menu.
@@ -1109,86 +1124,61 @@ class ImageProcessorMenu:
 
 	# Creates/appends to a log file in the user's specified output directory which will record all processing done on selected images
 	def createLogFile(self, img, logFileDir, outputDir, fileContents):
-		# Create a txt file for log info
-		log = open(logFileDir, 'a')
-		log.write(str(datetime.now()) +' - Results for image: ' + img.getPath() + '\n')
+		try:
+			# Create a txt file for log info
+			log = open(logFileDir, 'a')
+			log.write(str(datetime.now()) +' - Results for image: ' + img.getPath() + '\n')
 
-		# If the user has chosen to copy over the original image, record it in log file
-		if (self.copyImageToNewDirectoryCheckBox.isSelected()):
-				log.write(str(datetime.now()) +'Copied image to: ' + outputDir.getPath() + '\n')
+			# If the user has chosen to copy over the original image, record it in log file
+			if (self.copyImageToNewDirectoryCheckBox.isSelected()):
+					log.write(str(datetime.now()) +'Copied image to: ' + outputDir.getPath() + '\n')
 
-		# Append each processing operation to the log file
-		log.write('Process performed: ' + '\n')
-		operationsPerformed = fileContents.split(";")
-		for i in operationsPerformed:
-			log.write('\t' + str(datetime.now()) + ' - ' + i + '\n')
-		log.write('\n')
-		log.write('\n')
+			# Append each processing operation to the log file
+			log.write('Process performed: ' + '\n')
+			operationsPerformed = fileContents.split(";")
+			for i in operationsPerformed:
+				log.write('\t' + str(datetime.now()) + ' - ' + i + '\n')
+			log.write('\n')
+			log.write('\n')
 
-		# Close the file
-		log.close()
+			# Close the file
+			log.close()
+		except IOError:
+			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % logFileDir)
 
 	# Updates a text file containing the file paths for the user's selected input, output, macro file, R installation (.exe) path, and R Script directories
 	# This file's data will be used to prepopulate the text fields with the user's last selected directories
 	def updateUserPathFile(self):
-		# Path to the self.directoryName directory
-		pluginDir = IJ.getDir("plugins") + self.directoryName
+		try:
+			# Create the file to house the path
+			file = File(self.pathFile)
+			writer = BufferedWriter(FileWriter(file))
 
-		# Create the file to house the path
-		file = File(pluginDir + "/user_paths.txt")
-		writer = BufferedWriter(FileWriter(file))
+			# Create the contents of the file
+			# rPath: Path to R.exe on the users system
+			# inputPath: Last used input directory path
+			# outputPath: Last used output directory path
+			# macroPath: Last used macro file path
+			# rScriptPath: Last used r script file path
+			contents = "rPath\t" + self.rcommand + "\r\n"
+			contents = contents + "inputPath\t" + self.inputDirectory.getPath() + "\r\n"
+			contents = contents + "outputPath\t" + self.outputDirectory.getPath() + "\r\n"
+			contents = contents + "macroPath\t" + self.macroDirectory.getPath() + "\r\n"
 
-		# Create the contents of the file
-		# rPath: Path to R.exe on the users system
-		# inputPath: Last used input directory path
-		# outputPath: Last used output directory path
-		# macroPath: Last used macro file path
-		# rScriptPath: Last used r script file path
-		contents = "rPath\t" + self.rcommand + "\r\n"
-		contents = contents + "inputPath\t" + self.inputDirectory.getPath() + "\r\n"
-		contents = contents + "outputPath\t" + self.outputDirectory.getPath() + "\r\n"
-		contents = contents + "macroPath\t" + self.macroDirectory.getPath() + "\r\n"
+			if not(self.rScriptDirectory is None):
+				contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
+			else:	
+				contents = contents + "rScriptPath\t\r\n"
 
-		if not(self.rScriptDirectory is None):
-			contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
-		else:	
-			contents = contents + "rScriptPath\t\r\n"
-
-		writer.write(contents)
-		writer.close()
-
-	# Gets text file containing user's last used file paths
-	def getUserPathFile(self):
-		directoryNames = ["rPath","inputPath", "outputPath", "macroPath"]
-		# Path to the self.directoryName directory
-		pluginDir = IJ.getDir("plugins") + self.directoryName
-
-		# Get file containing user's saved file paths
-		file = File(pluginDir + "\user_paths.txt")
-		sc = Scanner(file, "UTF-8")
-
-		# Append file contents to temporary string
-		filetxt = ""
-		while (sc.hasNext()):
-			filetxt = filetxt + sc.nextLine()
-
-		# Replace directory names within string with * in order to correctly extract paths
-		for name in directoryNames:
-			filetxt = re.sub(name, "*", filetxt)
-
-		# Split tmp string to array.  Each element represents a different path
-		paths = filetxt.split("*")
-
-		# Remove trailing and leading whitespace
-		for i in range(0, len(paths)):
-			paths[i] = paths[i].strip()
-
-		return paths
+			writer.write(contents)
+			writer.close()
+		except IOError:
+			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % self.pathFile)
 
 	# Assign each global path variable to corresponding path from array.  Also change text of each textfield.
 	def prepopulateDirectories(self):
 		# Get user paths file
-		paths = self.readPathFile()		
+		paths = self.readPathFile()
 
 		# Populate R Path
 		if paths['rPath'] != "":
@@ -1210,27 +1200,26 @@ class ImageProcessorMenu:
 
 	# Adds selected extension(s) to the text file containing the lsit of accepted file types. Also updates the global list variable for valid file types.
 	def updateUserAcceptedExtensions(self,extensions):
-		# Path to the self.directoryName  directory
-		pluginDir = IJ.getDir("plugins") + self.directoryName
-
-		# Create a txt file for log info
-		file = open(pluginDir + "/acceptedFileExtensions.txt", 'a')
-
-		for ext in extensions:
-			# Boolean to indicate specified extension is already in the list - no need to add it again
-			duplicate = False
-			if ext.strip() in self.validFileExtensionsString:
-				duplicate = True
-			if not (duplicate):
-				# write extension to file
-				file.write(ext.strip() + ", ")
-				# add new extensions to global list
-				self.validFileExtensionsString = self.validFileExtensionsString + ", " + ext.strip()
-
-		# Update tool tip text to reflect all valid file extensions
-		self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
-		# Close the file
-		file.close()
+		try:
+			file = open(self.acceptedExtensionFile, 'a')
+	
+			for ext in extensions:
+				# Boolean to indicate specified extension is already in the list - no need to add it again
+				duplicate = False
+				if ext.strip() in self.validFileExtensionsString:
+					duplicate = True
+				if not (duplicate):
+					# write extension to file
+					file.write(ext.strip() + ", ")
+					# add new extensions to global list
+					self.validFileExtensionsString = self.validFileExtensionsString + ", " + ext.strip()
+	
+			# Update tool tip text to reflect all valid file extensions
+			self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
+			# Close the file
+			file.close()
+		except IOError:
+			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % self.acceptedExtensionFile)
 
 	updateUserAcceptedExtensions = CallableWrapper(updateUserAcceptedExtensions)
 
@@ -1304,6 +1293,8 @@ class ImageProcessorMenu:
 					panel.add(button)
 					frame.add(panel)
 					frame.show()
+				except IOError:
+					self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % csvFile)
 				except:
 					print "Error"
 			else:
@@ -1323,14 +1314,17 @@ class ImageProcessorMenu:
 
 	# TODO: implement
 	def generateBasicRScript(self, xVariable, yVariable):
-		defaultR = open(IJ.getDir("plugins") + self.directoryName + "/default.R", "r")
-		newR = ""
-		for line in defaultR:
-			if line[0:1] != "#":
-				newR = newR + line
-		out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
-		out.write(newR)
-		out.close()
+		try:
+			defaultR = open(IJ.getDir("plugins") + self.directoryName + "/default.R", "r")
+			newR = ""
+			for line in defaultR:
+				if line[0:1] != "#":
+					newR = newR + line
+			out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
+			out.write(newR)
+			out.close()
+		except IOError:
+			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % "files")
 
 	### End of ImageProcessorMenu
 
