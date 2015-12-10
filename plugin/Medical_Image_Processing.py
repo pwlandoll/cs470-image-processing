@@ -47,7 +47,7 @@ from javax.swing import JMenu
 from javax.swing import JMenuBar
 from javax.swing import JMenuItem
 from javax.swing import JPopupMenu
-from javax.swing import JProgressBar;
+from javax.swing import JProgressBar
 from javax.swing import JOptionPane
 from javax.swing import JSeparator
 from javax.swing import SwingConstants
@@ -80,10 +80,12 @@ from urllib import urlretrieve
 #	in the directory or in the text file. When finished the results will be fed into an R
 #	script for analyzing (need to implement)
 
+
 # Wraps a method call to allow static methods to be called from ImageProcessorMenu
 class CallableWrapper:
 	def __init__(self, any):
 		self.__call__ = any
+
 
 # ActionListener for DelimiterComboBox
 class DelimiterActionListener(ActionListener):
@@ -92,6 +94,7 @@ class DelimiterActionListener(ActionListener):
 		box = event.getSource()
 		# Enable/Disable extension textfield based on selected delimiter
 		ImageProcessorMenu.setExtensionTextfieldEnabled(box.getSelectedItem())
+
 
 # Main class
 class ImageProcessorMenu:
@@ -106,7 +109,7 @@ class ImageProcessorMenu:
 		self.acceptedExtensionFile = IJ.getDir("plugins") + self.directoryName + "/acceptedFileExtensions.txt"
 
 		# Path for the stored text file
-		# TODO: Have this set to a directory with write access 
+		# TODO: Have this set to a directory with write access
 		#self.pathFile = "~/.MIP_user_paths.txt"
 		self.pathFile = IJ.getDir("plugins") + self.directoryName + "/user_paths.txt"
 
@@ -114,7 +117,7 @@ class ImageProcessorMenu:
 		frameWidth, frameHeight = 550, 350
 		# Set button size
 		buttonWidth, buttonHeight = 130, 25
-		
+
 		# Create frame
 		self.frame = JFrame("Medical Image Processing")
 		self.frame.setSize(frameWidth, frameHeight)
@@ -131,7 +134,7 @@ class ImageProcessorMenu:
 		self.inputTextfield.setText("Select Import Directory")
 		pnl.add(self.inputTextfield)
 
-		# Add a browse button to the frame for an input directory 
+		# Add a browse button to the frame for an input directory
 		inputButton = JButton('Select Input',actionPerformed=self.optionMenuPopup)
 		inputButton.setPreferredSize(Dimension(buttonWidth, buttonHeight))
 		pnl.add(inputButton)
@@ -270,11 +273,12 @@ class ImageProcessorMenu:
 
 		# Find the R executable
 		self.findR(False)
-		
+
 		# Check if user has file containing accepted file extensions
 		self.checkAcceptedExtensionsFile()
 
 	# Closes the program
+	# TODO: This closes Fiji, not just the plugin
 	def onExit(self, event):
 		System.exit(0)
 
@@ -356,7 +360,7 @@ class ImageProcessorMenu:
 		else:
 			rcmd = None
 			# Look for the Rscript command. First, try known locations for OS X, Linux, and Windows
-			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:/Program Files/R" 
+			osxdir, linuxdir, windowsdir = "/usr/local/bin/Rscript", "/usr/bin/Rscript", "C:/Program Files/R"
 			if os.path.exists(osxdir) and not change:
 				rcmd = osxdir
 			elif os.path.exists(linuxdir) and not change:
@@ -394,7 +398,7 @@ class ImageProcessorMenu:
 					if ret == JFileChooser.CANCEL_OPTION:
 						notR = False
 		self.rcommand = rcmd
-		
+
 	# Enables/Disables the file extension textfield based on the user's selected delimiter
 	def setExtensionTextfieldEnabled(selectedDelimiter):
 		extTextfield = JTextField()
@@ -452,7 +456,7 @@ class ImageProcessorMenu:
 	# If user enters a name, that name is returned
 	def getName(self):
 		# Creates a prompt asking the user of the name of the file used in creating the original macro
-		result = JOptionPane.showInputDialog(None, "Enter image name used to create macro (including extension):");
+		result = JOptionPane.showInputDialog(None, "Enter image name used to create macro (including extension):")
 		if result == None or result =="":
 			self.showErrorDialog("Error","Must enter a name. If no name exists, enter NONAME")
 			# If user clicks cancel on error message, don't continue
@@ -582,7 +586,7 @@ class ImageProcessorMenu:
 							  '}'
 							  # Creates the column name in the results window and adds the imageName to each record
 							  'function saveResults(){'
-							    # Checks if a results window is open	
+							    # Checks if a results window is open
 								'if (isOpen("Results")) {'
 									# Loop for every record in the results window
 									'for(i=0;i<getValue("results.count");i++){'
@@ -785,13 +789,13 @@ class ImageProcessorMenu:
 						self.inputTextfield.setText(chooseFile.getSelectedFile().getPath())
 						self.urlLocation = None
 					elif directoryType == "Output":
-						self.outputDirectory = chooseFile.getSelectedFile() 
+						self.outputDirectory = chooseFile.getSelectedFile()
 						self.outputTextfield.setText(chooseFile.getSelectedFile().getPath())
 					elif directoryType == "Macro File":
-						self.macroDirectory = chooseFile.getSelectedFile() 
+						self.macroDirectory = chooseFile.getSelectedFile()
 						self.macroSelectTextfield.setText(chooseFile.getSelectedFile().getPath())
 					elif directoryType == "R Script":
-						self.rScriptDirectory = chooseFile.getSelectedFile() 
+						self.rScriptDirectory = chooseFile.getSelectedFile()
 						self.rScriptSelectTextfield.setText(chooseFile.getSelectedFile().getPath())
 					self.shouldEnableStart()
 		# User has data for previously saved directories, populate the text fields and global variables with pertinent information
@@ -1032,7 +1036,7 @@ class ImageProcessorMenu:
 			self.runner.setMacro(fileContents)
 
 			# Give the macroRunner object a reference to this menu so it can call process
-			# 	on this instance when it finishes running the macro so the next image can 
+			# 	on this instance when it finishes running the macro so the next image can
 			# 	be processed
 			self.runner.setReference(self)
 
@@ -1167,7 +1171,7 @@ class ImageProcessorMenu:
 
 			if not(self.rScriptDirectory is None):
 				contents = contents + "rScriptPath\t" + self.rScriptDirectory.getPath() + "\r\n"
-			else:	
+			else:
 				contents = contents + "rScriptPath\t\r\n"
 
 			writer.write(contents)
@@ -1202,7 +1206,7 @@ class ImageProcessorMenu:
 	def updateUserAcceptedExtensions(self,extensions):
 		try:
 			file = open(self.acceptedExtensionFile, 'a')
-	
+
 			for ext in extensions:
 				# Boolean to indicate specified extension is already in the list - no need to add it again
 				duplicate = False
@@ -1213,7 +1217,7 @@ class ImageProcessorMenu:
 					file.write(ext.strip() + ", ")
 					# add new extensions to global list
 					self.validFileExtensionsString = self.validFileExtensionsString + ", " + ext.strip()
-	
+
 			# Update tool tip text to reflect all valid file extensions
 			self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
 			# Close the file
@@ -1414,7 +1418,7 @@ class MacroProgressMenu(WindowAdapter):
 	# Override
 	# Custom on close opperation
 	def windowClosing(self, event):
-		# Prevents more macros from running	
+		# Prevents more macros from running
 		self.ref.runner.run = False
 		# Stops currently ruuing macro
 		self.ref.runner.abortMacro()
@@ -1469,32 +1473,34 @@ class macroRunner(Runnable):
 	# Aborts the currently running macro
 	def abortMacro(self):
 		self.inter.abort()
-		
+
+
 class PressEnterRunner(Runnable):
 	def run(self):
 		self.timer = Timer()
 		self.start()
-		
+
 	def start(self):
 		try:
 			self.task = PressEnterTask()
 			self.task.setRef(self)
 			self.timer.schedule(self.task, 10000)
 		except AttributeError:
-			pass	
+			pass
 
 	def stop(self):
 		try:
 			self.timer.cancel()
 		except AttributeError:
 			pass
-		
+
 	def reset(self):
 		try:
 			self.stop()
 			self.start()
 		except AttributeError:
 			pass
+
 
 class PressEnterTask(TimerTask):
 	def run(self):
