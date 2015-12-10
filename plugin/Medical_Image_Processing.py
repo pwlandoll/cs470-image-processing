@@ -447,7 +447,6 @@ class ImageProcessorMenu:
 		# If a file is chosen continue to allow user to choose where to save the generalized file
 		if chooseFile.getSelectedFile() is not None and ret == JFileChooser.APPROVE_OPTION:
 			name = self.getName()
-			print name
 			if name != None:
 				self.generalize(chooseFile.getSelectedFile(), name)
 
@@ -494,14 +493,15 @@ class ImageProcessorMenu:
 			fileContents = re.sub("open=[^\"]*IMAGENAME", "open=[INPUTPATH]", fileContents)
 
 			# Replace the bio-formats exporter directory path with FILEPATH
-			fileContents = re.sub(r"save=[^\s\"]*\\",r"save=FILEPATH/", fileContents)
+			fileContents = re.sub(r"save=[^\"]*\\",r"save=FILEPATH/", fileContents)
 
 			# Replace the bio-formats exporter directory path with FILPEPATH followed by text used to inidcate
 			# 	what processing was done on the image and IMAGENAME
-			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)IMAGENAME",r"save=[FILEPATH/\1IMAGENAME]", fileContents)
+			fileContents = re.sub(r"save=FILEPATH/([^\"]*)IMAGENAME",r"save=[FILEPATH/\1IMAGENAME]", fileContents)
 
-			# Replace the save results directory path with FILEPATH
-			fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
+			# Replace the save results directory path with nothing, we handle our own saving of results
+			#fileContents = re.sub("saveAs\(\"Results\", \".*\\\\", r'saveAs("Results", "FILEPATH/../', fileContents)
+			fileContents = re.sub(r'saveAs\("Results",[^;]*\);', '', fileContents)
 
 			# Replace the save text directory path with FILEPATH
 			fileContents = re.sub("saveAs\(\"Text\", \".*\\\\", r'saveAs("Text", "FILEPATH/../', fileContents)
@@ -509,8 +509,8 @@ class ImageProcessorMenu:
 			# Replace all places where the image name without a file extension appears with NOEXTENSION
 			fileContents = re.sub(fileName, "NOEXTENSION", fileContents)
 
-			# Do not believe this is necessary, will keep till tested
-			fileContents = re.sub(r"save=FILEPATH\\([^\s\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH/\1NOEXTENSION\2]", fileContents)
+			# Used to handle instances of bio-formats exporter that change file extensions
+			fileContents = re.sub(r"save=FILEPATH/([^\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH/\1NOEXTENSION\2]", fileContents)
 
 			# Replace all paths found in the open command with INPUTPATH\\IMAGENAME
 			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH/IMAGENAME"', fileContents)
@@ -522,9 +522,6 @@ class ImageProcessorMenu:
 			# Replace all paths found using saveAs with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
 			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)IMAGENAME"\)', 'saveAs(\1, "FILEPATH/\2IMAGENAME")', fileContents)
 			fileContents = re.sub(r'saveAs\([^,]*, "[^"]*\\([^"]*)NOEXTENSION([^"]*)"\)', 'saveAs(\1,"FILEPATH/\2NOEXTENSION\3")', fileContents)
-
-			# Replace .xls extensions with .csv so results will work with the R script
-			fileContents = fileContents.replace(".xls", ".csv")
 
 			# Inserts code to save the images if no save commands are found in the original macro file
 			if fileContents.find("Bio-Formats Exporter") == -1 and fileContents.find("saveAs(") == -1 and fileContents.find('run("Save"') == -1:
@@ -538,6 +535,8 @@ class ImageProcessorMenu:
 					else:
 						command = "unknown"
 					fileContents = fileContents + line + ";" + "saveChanges(\"" + command + "\");"
+			else:
+				fileContents = fileContents.replace(";",';saveResults();')
 
 
 			# Inserts in import function if the user did not use one
@@ -591,12 +590,22 @@ class ImageProcessorMenu:
 									# Loop for every record in the results window
 									'for(i=0;i<getValue("results.count");i++){'
 										# Add the imagename to the record
-										'setResult("Image Name", i, List.get(getImageID()));'
+										'if(List.size() > 0){'
+											'setResult("Image Name", i, List.get(getImageID()));'
+										'}'
+										'else{'
+											'setResult("Image Name", i, getTitle());'
+										'}'
 										'setResult("Base Image", i, "IMAGENAME");'
 									'}'
 									'selectWindow("Results");'
 									# Strip the extension from the file name and save the results as the imagename.csv
-									'saveAs("Results", "FILEPATH/../" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+									'if(List.size() > 0){'
+										'saveAs("Results", "FILEPATH/../" + substring(List.get(getImageID()),0,indexOf(List.get(getImageID()),".")) +".csv");'
+									'}'
+									'else{'
+										'saveAs("Results", "FILEPATH/../" + substring(getTitle(),0,indexOf(getTitle(),".")) +".csv");'
+									'}'
 									# Close the results window
 									'run("Close");'
 								'}'
@@ -677,6 +686,9 @@ class ImageProcessorMenu:
 
 			# Closes any open images
 			fileContents = fileContents + 'if(nImages != 0){for (i=0; i < nImages; i++){selectImage(i+1);close();i=i-1;}'
+
+			# Regular expressions sometimes create double ]], need to replace them with just ]
+			fileContents = fileContents.replace(']]',']')
 
 			# Create the general macro file and write the generalized text to it, use a file browswer to select where to save file
 			fileChooser = JFileChooser();
