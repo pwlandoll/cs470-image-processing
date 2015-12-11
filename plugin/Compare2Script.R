@@ -63,20 +63,8 @@ setwd(paste(path,curDate,"/",sep = ""))
 
 
 
-# This function should return a proper list with all the data.frames as elements.
-# Has a new column added specifying which data frame it is from (labeling purposes)
-dfs <- Filter(function(x) is(x, "data.frame"), mget(ls()))
-dfNames <- names(dfs)
-for(x in 1: length(dfs)){
-  df.name <- dfNames[x]
-  print(df.name)
-  colnames(dfs[[x]])[1]
-  dfs[[x]]$fromDF <- df.name
-}
-
-
- variableX <- commandArgs(trailingOnly = False)[1]
- variableY <- commandArgs(trailingOnly = False)[1]
+variableX <- commandArgs(trailingOnly = False)[1]
+variableY <- commandArgs(trailingOnly = False)[1]
 
 varX = which(colnames(data)==variableX)
 varY = which(colnames(data)==variableY)
