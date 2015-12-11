@@ -1336,6 +1336,8 @@ class ImageProcessorMenu:
 			for line in defaultR:
 				if line[0:1] != "#":
 					newR = newR + line
+			newR.replace("variableX<- Pass variable here.", xVariable)
+			newR.replace("variableY<- Pass variable here.", yVariable)
 			out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
 			out.write(newR)
 			out.close()
