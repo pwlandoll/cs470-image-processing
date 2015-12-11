@@ -61,24 +61,17 @@ sink(NULL)
 dir.create(file.path(path,curDate), showWarnings = FALSE)
 setwd(paste(path,curDate,"/",sep = ""))
 
+attach(data)
 
 variableX <- XVARIABLE
 variableY <- YVARIABLE
 
-varX = which(colnames(data)==variableX)
-varY = which(colnames(data)==variableY)
-
-selectX = colnames(data)[varX]
-selectY = colnames(data)[varY]
-
-newdata <- subset(data, select=c(selectX, selectY))
 
 #Scatterplot
 scatterPlot <- function(xVar, yVar){
   library(ggplot2)
-  plot <- qplot(xVar, yVar, xlab = variableX, ylab = variableY) + geom_smooth(method=lm,   # Add linear regression line
+  plot <- qplot(xVar, yVar) + geom_smooth(method=lm,   # Add linear regression line
                                                                                         se=FALSE)
-  ggsave(filename = paste(variableX, " vs ", variableY,"Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
+  ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
-with(newdata, scatterPlot(selectX, selectY))
-
+with(newdata, scatterPlot(variableX, variableY))
