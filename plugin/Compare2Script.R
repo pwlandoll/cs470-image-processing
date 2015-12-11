@@ -63,8 +63,8 @@ setwd(paste(path,curDate,"/",sep = ""))
 
 attach(data)
 
-variableX <- XVARIABLE
-variableY <- YVARIABLE
+variableX <- "XVARIABLE"
+variableY <- "YVARIABLE"
 
 
 #Scatterplot
@@ -74,4 +74,4 @@ scatterPlot <- function(xVar, yVar){
                                                                                         se=FALSE)
   ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
-with(newdata, scatterPlot(variableX, variableY))
+with(data, scatterPlot(variableX, variableY))
