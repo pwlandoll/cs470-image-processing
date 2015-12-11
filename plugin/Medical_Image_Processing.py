@@ -1234,6 +1234,7 @@ class ImageProcessorMenu:
 			self.extensionTextfield.setToolTipText("Valid File Types: [" + self.validFileExtensionsString + "]")
 			# Close the file
 			file.close()
+
 		except IOError:
 			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % self.acceptedExtensionFile)
 
@@ -1348,11 +1349,13 @@ class ImageProcessorMenu:
 
 # Creates a Window which prompts the user to enter their desired file types to be added to the list of accepted file types
 class AddFileExtensionMenu():
+
 	# Gets the user's specified extension(s)
 	def getUserInput(self, event):
 		# Split each extension to array
 		extensions = self.addExtTextfield.getText().split(',')
 		ImageProcessorMenu.updateUserAcceptedExtensions(ImageProcessorMenu(), extensions)
+		self.disposeAddMenuExtensionFrame()
 
 	# Window Constructor
 	def __init__(self, event):
@@ -1390,6 +1393,9 @@ class AddFileExtensionMenu():
 		# Show the frame and disable resizing of it
 		self.addExtMenuFrame.setResizable(False)
 		self.addExtMenuFrame.setVisible(True)
+
+	def disposeAddMenuExtensionFrame(self):
+		self.addExtMenuFrame.dispose()
 
 
 # Extends the WindowAdapter class: does this to overide the windowClosing method
