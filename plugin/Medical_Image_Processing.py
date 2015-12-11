@@ -1331,13 +1331,13 @@ class ImageProcessorMenu:
 	# TODO: implement
 	def generateBasicRScript(self, xVariable, yVariable):
 		try:
-			defaultR = open(IJ.getDir("plugins") + self.directoryName + "/default.R", "r")
+			defaultR = open(IJ.getDir("plugins") + self.directoryName + "/Compare2Script.R", "r")
 			newR = ""
 			for line in defaultR:
 				if line[0:1] != "#":
 					newR = newR + line
-			newR.replace("variableX<- Pass variable here.", xVariable)
-			newR.replace("variableY<- Pass variable here.", yVariable)
+			newR = newR.replace("variableX", xVariable)
+			newR.replace("variableY", yVariable)
 			out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
 			out.write(newR)
 			out.close()
