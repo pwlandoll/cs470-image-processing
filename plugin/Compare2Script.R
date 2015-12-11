@@ -62,10 +62,6 @@ dir.create(file.path(path,curDate), showWarnings = FALSE)
 setwd(paste(path,curDate,"/",sep = ""))
 
 
-
-variableX <- commandArgs(trailingOnly = False)[1]
-variableY <- commandArgs(trailingOnly = False)[1]
-
 varX = which(colnames(data)==variableX)
 varY = which(colnames(data)==variableY)
 
