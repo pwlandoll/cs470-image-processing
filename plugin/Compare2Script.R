@@ -32,7 +32,7 @@ checkPackage <- function(x){
 }
 
 #  Then try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
+checkPackage( c("ggplot2") )
 
 
 # This is the code to read all csv files into R.
@@ -44,7 +44,7 @@ data <- do.call("rbind", lapply(file_list, function(x)
 
 
 sink(file=paste0("Complete Data Summary_",curTime, ".txt", sep = "")) 
-summary(data_merge)
+summary(data)
 sink(NULL)
 
 #Create a new data frame based on if the word area is one of the header
@@ -62,32 +62,20 @@ dir.create(file.path(path,curDate), showWarnings = FALSE)
 setwd(paste(path,curDate,"/",sep = ""))
 
 
+varX = which(colnames(data)==variableX)
+varY = which(colnames(data)==variableY)
 
-# This function should return a proper list with all the data.frames as elements.
-# Has a new column added specifying which data frame it is from (labeling purposes)
-dfs <- Filter(function(x) is(x, "data.frame"), mget(ls()))
-dfNames <- names(dfs)
-for(x in 1: length(dfs)){
-  df.name <- dfNames[x]
-  print(df.name)
-  colnames(dfs[[x]])[1]
-  dfs[[x]]$fromDF <- df.name
-}
+selectX = colnames(data)[varX]
+selectY = colnames(data)[varY]
+
+newdata <- subset(data, select=c(selectX, selectY))
 
 #Scatterplot
 scatterPlot <- function(xVar, yVar){
   library(ggplot2)
-  plot <- qplot(xVar, yVar) + geom_smooth(method=lm,   # Add linear regression line
+  plot <- qplot(xVar, yVar, xlab = variableX, ylab = variableY) + geom_smooth(method=lm,   # Add linear regression line
                                                                                         se=FALSE)
-  ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
+  ggsave(filename = paste(variableX, " vs ", variableY,"Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
-with(data, scatterPlot(variableX, variableY))
+with(newdata, scatterPlot(selectX, selectY))
 
-
-scatterplotMatrix<- function(){
-  jpeg(paste("Merged Data Matrices", curTime, ".jpg", sep=""), width = 850)
-  library(car)
-  scatterplot.matrix(~variableX+variableY|Base.Image, data = data)
-  dev.off()
-}
-scatterplotMatrix()
