@@ -44,7 +44,7 @@ data <- do.call("rbind", lapply(file_list, function(x)
 
 
 sink(file=paste0("Complete Data Summary_",curTime, ".txt", sep = "")) 
-summary(data_merge)
+summary(data)
 sink(NULL)
 
 #Create a new data frame based on if the word area is one of the header
