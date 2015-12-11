@@ -1334,8 +1334,7 @@ class ImageProcessorMenu:
 			defaultR = open(IJ.getDir("plugins") + self.directoryName + "/Compare2Script.R", "r")
 			newR = ""
 			for line in defaultR:
-				if line[0:1] != "#":
-					newR = newR + line
+				newR = newR + line
 			newR = newR.replace("variableX", xVariable)
 			newR = newR.replace("variableY", yVariable)
 			out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
