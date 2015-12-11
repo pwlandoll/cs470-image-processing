@@ -1,4 +1,4 @@
-setwd("~/CS 470")
+
 
 #Clear global enviornment
 rm(list = ls(all.names = TRUE))
