@@ -105,16 +105,3 @@ for ( i in seq(1,length( data ),1) ){
   dev.off()
   }
 }
-
-#Plotting two variables passed in: Scatterplot
-variableX<- Pass variable here.
-variableY<- Pass variable here.
-library(ggplot2)
-#If both variables are of numberic type...
-if(isTRUE(typeof(varaibleX == "integer" | typeof(variableX) == "double") &
-  isTRUE(typeof(variableY) == "integer" | typeof(variableY) == "double")))
-{
-#Create a scatterplot with a regression line
-plot <- qplot(variablex, variabley)+ geom_smooth(method=lm,se=FALSE)
-ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
-}
