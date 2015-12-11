@@ -35,31 +35,24 @@ checkPackage <- function(x){
 checkPackage( c("ggplot2") )
 
 
+outputDirectory <- commandArgs(trailingOnly = TRUE)[1]
+
 # This is the code to read all csv files into R.
 # Create One data frame.
-path <- paste0(getwd(), "/")
+path <- paste0(outputDirectory, "/", sep="")
+print(path)
 file_list <- list.files(path = path, pattern="*.csv")
 data <- do.call("rbind", lapply(file_list, function(x) 
   read.csv(paste(path, x, sep = ""), stringsAsFactors = FALSE)))
 
-
-sink(file=paste0("Complete Data Summary_",curTime, ".txt", sep = "")) 
-summary(data)
-sink(NULL)
-
-#Create a new data frame based on if the word area is one of the header
-areaCol <- data[grep("area", names(data), value = TRUE,ignore.case = TRUE)]
-sink(file=paste0("Area Summary_",curTime, ".txt", sep = "")) 
-summary(areaCol)
-sink(NULL)
-
 # Create a subdirectory based on the curDate variable for saving plots.
-# (If today is 4/4/14, then a new folder will be created with that date and any work done on that day will be 
-# saved into that folder.)Will then set current directory to the new direcory created. 
-# This way all the data has already been loaded into the global enviornment per the previous directory. 
-# Now all new plots will be saved to the new directory.
+# A Folder is created with the current date as it's name
 dir.create(file.path(path,curDate), showWarnings = FALSE)
+# Set newly created folder as working directory. Now all files saved will be
+# saved into that location
 setwd(paste(path,curDate,"/",sep = ""))
+
+
 
 attach(data)
 
