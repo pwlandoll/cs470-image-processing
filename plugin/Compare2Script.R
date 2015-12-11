@@ -66,6 +66,8 @@ attach(data)
 variableX <- "XVARIABLE"
 variableY <- "YVARIABLE"
 
+detach(data)
+
 
 #Scatterplot
 scatterPlot <- function(xVar, yVar){
