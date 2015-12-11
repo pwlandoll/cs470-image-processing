@@ -1335,8 +1335,8 @@ class ImageProcessorMenu:
 			newR = ""
 			for line in defaultR:
 				newR = newR + line
-			newR = newR.replace("variableX", xVariable)
-			newR = newR.replace("variableY", yVariable)
+			newR = newR.replace("VARIABLEX", xVariable)
+			newR = newR.replace("VARIABLEY", yVariable)
 			out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
 			out.write(newR)
 			out.close()

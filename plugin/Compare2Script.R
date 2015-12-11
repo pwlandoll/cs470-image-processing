@@ -62,6 +62,9 @@ dir.create(file.path(path,curDate), showWarnings = FALSE)
 setwd(paste(path,curDate,"/",sep = ""))
 
 
+variableX <- XVARIABLE
+variableY <- YVARIABLE
+
 varX = which(colnames(data)==variableX)
 varY = which(colnames(data)==variableY)
 
