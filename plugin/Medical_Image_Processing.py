@@ -276,9 +276,10 @@ class ImageProcessorMenu:
 		self.checkAcceptedExtensionsFile()
 
 	# Closes the program
-	# TODO: This closes Fiji, not just the plugin
 	def onExit(self, event):
-		System.exit(0)
+		self.frame.dispose()
+		# Using the line below will close the entire Fiji program, not just the plugin
+		#System.exit(0)
 
 	def checkPathFile(self):
 		if not os.path.exists(self.pathFile):
