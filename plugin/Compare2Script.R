@@ -32,7 +32,7 @@ checkPackage <- function(x){
 }
 
 #  Then try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2", "car") )
+checkPackage( c("ggplot2") )
 
 
 # This is the code to read all csv files into R.
@@ -74,20 +74,22 @@ for(x in 1: length(dfs)){
   dfs[[x]]$fromDF <- df.name
 }
 
+
+ variableX <- commandArgs(trailingOnly = False)[1]
+ variableY <- commandArgs(trailingOnly = False)[1]
+
+varX = which(colnames(data)==variableX)
+varY = which(colnames(data)==variableY)
+
+selectX = colnames(data)[varX]
+selectY = colnames(data)[varY]
+
 #Scatterplot
 scatterPlot <- function(xVar, yVar){
   library(ggplot2)
   plot <- qplot(xVar, yVar) + geom_smooth(method=lm,   # Add linear regression line
                                                                                         se=FALSE)
-  ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
+  ggsave(filename = paste(variableX, " vs ", variableY,"Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
-with(data, scatterPlot(variableX, variableY))
+with(data, scatterPlot(selectX, selectY))
 
-
-scatterplotMatrix<- function(){
-  jpeg(paste("Merged Data Matrices", curTime, ".jpg", sep=""), width = 850)
-  library(car)
-  scatterplot.matrix(~variableX+variableY|Base.Image, data = data)
-  dev.off()
-}
-scatterplotMatrix()
