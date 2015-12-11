@@ -32,7 +32,7 @@ checkPackage <- function(x){
 }
 
 #  Then try/install packages...Insert any more packages that may be needed here
-checkPackage( c("ggplot2","psych","corrgram", "plyr", "car", "reshape2", "vcd", "hexbin") )
+checkPackage( c("ggplot2", "car") )
 
 
 # This is the code to read all csv files into R.
