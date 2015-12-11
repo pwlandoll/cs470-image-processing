@@ -109,8 +109,6 @@ class ImageProcessorMenu:
 		self.acceptedExtensionFile = IJ.getDir("plugins") + self.directoryName + "/acceptedFileExtensions.txt"
 
 		# Path for the stored text file
-		# TODO: Have this set to a directory with write access
-		#self.pathFile = "~/.MIP_user_paths.txt"
 		self.pathFile = IJ.getDir("plugins") + self.directoryName + "/user_paths.txt"
 
 		# Set frame size
