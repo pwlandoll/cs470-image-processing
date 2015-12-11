@@ -354,7 +354,7 @@ class ImageProcessorMenu:
 		self.checkPathFile()
 		rPath = self.readPathFile()["rPath"]
 		# If it found one, set the global variable and prepopulate directories, else further the search
-		if rPath and rPath != "" and not change:
+		if rPath and rPath.strip() != "" and not change:
 			rcmd = rPath
 			self.prepopulateDirectories()
 		else:
