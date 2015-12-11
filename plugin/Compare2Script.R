@@ -52,21 +52,27 @@ dir.create(file.path(path,curDate), showWarnings = FALSE)
 # saved into that location
 setwd(paste(path,curDate,"/",sep = ""))
 
-
-
-attach(data)
-
+#Pass in selected variables
 variableX <- "XVARIABLE"
 variableY <- "YVARIABLE"
 
-detach(data)
+#Create labels
+labelX = variableX
+labelY = variableY
 
+#Return column index
+varX <- which(colnames(data)==variableX)
+varY <- which(colnames(data)==variableY)
+
+#Selects all rows based on the column index
+variableX <- data[[varX]]
+variableY <- data[[varY]]
 
 #Scatterplot
 scatterPlot <- function(xVar, yVar){
   library(ggplot2)
-  plot <- qplot(xVar, yVar) + geom_smooth(method=lm,   # Add linear regression line
+  plot <- qplot(xVar, yVar, xlab = labelX, ylab = labelY) + geom_smooth(method=lm,   # Add linear regression line
                                                                                         se=FALSE)
-  ggsave(filename = paste("Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
+  ggsave(filename = paste(labelX, " ", labelY, " Test_ScatterPlot", curTime, ".jpg", sep=""), plot = plot)
 }
 with(data, scatterPlot(variableX, variableY))
