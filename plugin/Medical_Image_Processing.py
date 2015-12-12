@@ -51,6 +51,7 @@ from javax.swing import JProgressBar
 from javax.swing import JOptionPane
 from javax.swing import JSeparator
 from javax.swing import SwingConstants
+from javax.swing import SwingUtilities
 from javax.swing.border import Border
 from javax.swing.filechooser import FileNameExtensionFilter
 
@@ -1326,20 +1327,36 @@ class ImageProcessorMenu:
 		if self.xComboBox.getSelectedItem() == " " or self.yComboBox.getSelectedItem() == " ":
 			self.showErrorDialog("Error","Both an x and y variable must be selected")
 		else:
+			SwingUtilities.getWindowAncestor(event.getSource().getParent()).dispose()
 			self.generateBasicRScript(self.xComboBox.getSelectedItem(), self.yComboBox.getSelectedItem())
 
-	# TODO: implement
+	# Reads in a basic r script and does a relace on the variables that make up the x and y axis
+	# Then it writes the new file to a new file based on the users selection with a file chooser
+	# xVariable		The varaible the user wants on the x axis
+	# yVariable 	The variable the user wants on the y axis
 	def generateBasicRScript(self, xVariable, yVariable):
 		try:
-			defaultR = open(IJ.getDir("plugins") + self.directoryName + "/Compare2Script.R", "r")
-			newR = ""
-			for line in defaultR:
-				newR = newR + line
-			newR = newR.replace("XVARIABLE", xVariable)
-			newR = newR.replace("YVARIABLE", yVariable)
-			out = open(IJ.getDir("plugins") + self.directoryName + "/testing.R", "w")
-			out.write(newR)
-			out.close()
+			# Ask user where to save and what to call file using a file chooser
+			fileChooser = JFileChooser();
+			if fileChooser.showSaveDialog(self.frame) == JFileChooser.APPROVE_OPTION:
+				path = fileChooser.getSelectedFile().getPath()
+				# Error checking to include extension
+				if path[-4:] != ".R":
+					path = path + ".R"
+				# Open the file used for creating the basic r script
+				defaultR = open(IJ.getDir("plugins") + self.directoryName + "/Compare2Script.R", "r")
+				newR = ""
+				# Read in each line of the file
+				for line in defaultR:
+					newR = newR + line
+				# Replace the XVARAIABLE and YVARIABLE text with the values selected by the user
+				newR = newR.replace("XVARIABLE", xVariable)
+				newR = newR.replace("YVARIABLE", yVariable)
+
+				# Write the text to a new file that the user selected
+				out = open(path, "w")
+				out.write(newR)
+				out.close()
 		except IOError:
 			self.showErrorDialog("Permissions Error", "Insufficient read/write access to %s\r\nPlease correct this issue and restart the plugin." % "files")
 
