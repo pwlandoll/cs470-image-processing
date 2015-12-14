@@ -909,7 +909,7 @@ class ImageProcessorMenu:
 	# Runs the macro file for each image in the input directory
 	def runMacro(self):
 		# Accepted file types
-		self.validFileExtensions = self.validFileExtensionsString.split(", ")
+		self.validFileExtensions = self.validFileExtensionsString.replace(" ","").split(",")
 		# Add blank string to list in case user does not specify file extensions
 		self.validFileExtensions.append("")
 		# Get the user's selected delimiter
@@ -923,7 +923,7 @@ class ImageProcessorMenu:
 		else:
 			self.selectedExtensions = self.extensionTextfield.getText()
 			self.selectedExtensions = self.selectedExtensions.lower()
-			self.selectedExtensions = self.selectedExtensions.split(", ")
+			self.selectedExtensions = self.selectedExtensions.split(",")
 
 			# Validation routine to ensure selected file extensions are valid and comma seperated
 			if not (self.validateUserInput(self.extensionTextfield.getName(), self.selectedExtensions, self.validFileExtensions)):
