@@ -1468,15 +1468,13 @@ class MacroProgressMenu(WindowAdapter):
 		self.macroMenuFrame.dispose()
 
 
-###############################################################
-# Extends the class runnable to run on a seperate thread      #
-# Recieves a macro file from the ImageProcessorMenu instance  #
-# 	and runs the macro. After the macro is executed, it calls #
-#	the process method of the ImageProcessorMenu instance to  #
-#	create a macro for the next file.                         #
-# Cannot get a new constuctor to work otherwise the set       #
-# 	methods would just be part of the constructor             #
-###############################################################
+# Extends the class runnable to run on a seperate thread
+# Recieves a macro file from the ImageProcessorMenu instance
+# 	and runs the macro. After the macro is executed, it calls
+#	the process method of the ImageProcessorMenu instance to
+#	create a macro for the next file.
+# Cannot get a new constuctor to work otherwise the set
+# 	methods would just be part of the constructor
 class macroRunner(Runnable):
 	# Overides the run method of the Runnable class
 	# Creates an instance of Interpreter to run the macro
