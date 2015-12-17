@@ -1489,8 +1489,7 @@ class macroRunner(Runnable):
 			self.enterPresser.stop()
 		# Prevents future macros from running if current macro was aborted
 		if self.run:
-			#ADD FOR FINAL
-			#WindowManager.closeAllWindows()
+			WindowManager.closeAllWindows()
 			self.ref.process()
 
 	# Sets the macro file
