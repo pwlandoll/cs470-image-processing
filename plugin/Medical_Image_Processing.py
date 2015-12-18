@@ -513,7 +513,7 @@ class ImageProcessorMenu:
 			fileContents = re.sub(r"save=FILEPATH/([^\"]*)NOEXTENSION([^\s\"]*)",r"save=[FILEPATH/\1NOEXTENSION\2]", fileContents)
 
 			# Replace all paths found in the open command with INPUTPATH\\IMAGENAME
-			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH/IMAGENAME"', fileContents)
+			fileContents = re.sub('open\("[^"]*\\IMAGENAME"','open("INPUTPATH"', fileContents)
 
 			# Replace all paths found using run("save") with path FILEPATH\\IMAGENAME for instances that use the same file extension and FILEPATH\\NOEXTENSION for different file extensions
 			fileContents = re.sub(r'run\("Save", "save=[^"]*\\([^"]*)IMAGENAME"', 'run("Save", "save=[FILEPATH/\1IMAGENAME]"', fileContents)
