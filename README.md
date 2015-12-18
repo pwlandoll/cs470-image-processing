@@ -34,5 +34,7 @@ The software is delivered as a .zip file that will contain:
 * Another Python file, `View_Step.py`
 * A sample macro file
 * A sample R script
+* A basic R script with functionality to compare variables
 * An R template that the user can use to make custom R scripts
+* A copy of the User Guide
 
